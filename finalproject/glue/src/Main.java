@@ -7,7 +7,6 @@ import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Formatter;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -18,6 +17,7 @@ import java.util.Map.Entry;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -27,55 +27,158 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
 import cue.lang.NGramIterator;
-import cue.lang.WordIterator;
 
 public class Main {
+
+    private static class WordNode {
+	final String name;
+	
+	Map<String, Integer> outgoing = new HashMap<String, Integer>();
+	Map<String, Integer> incoming = new HashMap<String, Integer>();
+	
+	public WordNode(String name) {
+	    this.name = name;
+	}
+	
+	public void addEdgeTo(WordNode toNode) {
+	    Integer count = outgoing.get(toNode.name);
+	    if (count == null) {
+		count = 0;
+	    }
+	    outgoing.put(toNode.name, count);
+	}
+
+	public void addEdgeFrom(WordNode fromNode) {
+	    Integer count = incoming.get(fromNode.name);
+	    if (count == 0) {
+		count = 0;
+	    }
+	    incoming.put(fromNode.name, count);
+	}
+    }
+    
+    private static class Graph {
+	final Map<String, WordNode> nodes = new HashMap<String, WordNode>();
+	
+	public void addEdge(String from, String to) {
+	    WordNode fromNode = getNode(from);
+	    WordNode toNode = getNode(to);
+	    fromNode.addEdgeTo(toNode);
+	    toNode.addEdgeFrom(fromNode);
+	}
+
+	private WordNode getNode(String name) {
+	    WordNode n = nodes.get(name);
+	    if (n == null) {
+		n = new WordNode(name);
+		nodes.put(name, n);
+	    }
+	    return n;
+	}
+    }
 
     private static final HashSet<String> IGNORE = new HashSet<String>(Arrays.asList(new String[] { "looking", "for", "i",
 	    "am", "a", "and", "to", "i'm", "who", "someone", "that", "with", "the", "of", "is", "can", "or", "in", "my",
 	    "not", "me", "want", "up", "down", "at", "as", "has", "but", "have", "it", "if", "be", "but", "you", "on", "so", "go", "do" }));
     
-    private static final String DATER_REGEXP = "<dater\\s+iam=\"(.*?)\"\\s+iamlookingfor=\"(.*?)\".*/>";
-
     private static final int MAX_NGRAM_LENGTH = 1;
 
     public static void main(String[] args) throws IOException, Exception {
-//	String input;
-//	if (args.length == 1) {
-//	    // Read from a file
-//	    input = readFile(args[0]);
-//	} else if (args.length == 0) {
-//	    input = readStream(System .in);
-//	} else {
-//	    System.err.println("Invalid number of arguments");
-//	    return;
-//	}
 
+	List<String> allText = new ArrayList<String>();
+
+	Map<String, Map<String, Integer>> iamToIwant = buildNetwork(allText);
+	// Map from a node to allthe things it wants, with count the number of times it shows up
+	
+	Map<String, Integer> inDegrees = new HashMap<String, Integer>();
+	Map<String, Integer> outDegree = new HashMap<String, Integer>();
+	
+	/*
+	 * Ok, so the out degree is, for each node, the sum of 
+	 */
+	
+	for (Entry<String, Map<String, Integer>> iamNode : iamToIwant.entrySet()) {
+	    String iam = iamNode.getKey();
+	    final Map<String, Integer> iamLinks = iamNode.getValue();
+	    for (Entry<String, Integer> iamToIwantEdge : iamLinks.entrySet()) {
+		String iwant = iamToIwantEdge.getKey();
+		int count = iamToIwantEdge.getValue();
+		Integer inDegree = inDegrees.get(iam);
+		if (inDegree == null) {
+		    inDegree = 0;
+		}
+		inDegrees.put(iam, inDegree + count);
+		
+		
+	    }
+	}
+	
+	Map<String, Map<String, Integer>> iwantToIam = reverseNetwork(iamToIwant);
+	
+	
+
+	printNetwork(iamToIwant);
+	
+	/*
+	 * Building the assymetries. I need to compute for each node the in and out degree. there are two ways of computing this,
+	 * one is by using just the number of edges, another by using the sum of each edge. There's also the problem that I need
+	 * to revert the map, because right now I only have the out degree, not the in degree. Perhaps I need a different representation
+	 * of the graph, something more explicit.
+	 * 
+	 * Ok, let's say I have a Graph class. The class has Nodes, the nodes have Edges. It's still an adjacency-list representation. Or is there a
+	 * better representation? A matrix would be n^2= 
+	 */
+	
+//	printAllText(allText);
+    }
+
+    private static Map<String, Map<String, Integer>> reverseNetwork(Map<String, Map<String, Integer>> iamToIwant) {
+	// Ok, so I take a map that for each node has the edges and the weights. I need to build a map that for each
+	// node 
+	Map<String, Map<String, Integer>> output = new HashMap<String, Map<String,Integer>>();;
+	for (Entry<String, Map<String, Integer>> entry : iamToIwant.entrySet()) {
+	    String iam = entry.getKey();
+	    final Map<String, Integer> iamLinks = entry.getValue();
+	    for (Entry<String, Integer> entry2 : iamLinks.entrySet()) {
+		String iwant = entry2.getKey();
+		int count = entry2.getValue();
+		Map<String, Integer> iwantLinks = output.get(iwant);
+		if (iwantLinks == null)	 {
+		    iwantLinks = new HashMap<String, Integer>();
+		    output.put(iwant, iwantLinks);
+		}
+		if (iwantLinks.containsKey(iam)) {
+		    throw new RuntimeException("The map shouldn't contain this...");
+		}
+		iwantLinks.put(iam, count);
+	    }
+	}
+	return output;
+    }
+
+    private static Map<String, Map<String, Integer>> buildNetwork(List<String> allText)
+	    throws ParserConfigurationException, SAXException, IOException {
 	DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 	factory.setValidating(false);
 	DocumentBuilder builder = factory.newDocumentBuilder();
 	builder.setErrorHandler(new ErrorHandler() {
-	    
 	    @Override
 	    public void warning(SAXParseException exception) throws SAXException {
 	    }
-	    
 	    @Override
 	    public void fatalError(SAXParseException exception) throws SAXException {
 		System.out.println(exception.getLineNumber());
 	    }
-	    
 	    @Override
 	    public void error(SAXParseException exception) throws SAXException {
-		
+		System.out.println(exception.getLineNumber());
 	    }
 	});
 	Document document = builder.parse(new File("/afs/ir/users/j/t/jtamayo/shared/cs448b/ciwant.xml"));
 	
 	NodeList childNodes = document.getChildNodes();
 
-	List<String> allText = new ArrayList<String>();
-	
+	Graph g = new Graph();
 	Map<String, Map<String, Integer>> network = new HashMap<String, Map<String,Integer>>();
 	
 	for (int i = 0; i < childNodes.getLength(); i++) {
@@ -104,6 +207,7 @@ public class Main {
 			    network.put(word, map);
 			}
 			for (String looking : iAmLookingFor) {
+			    g.addEdge(word, looking);
 			    Integer count = map.get(looking);
 			    if (count == null) {
 				count = 0;
@@ -114,19 +218,7 @@ public class Main {
 		}
 	    }
 	}
-//	
-//	
-//	Pattern p = Pattern.compile(DATER_REGEXP);
-//	Matcher m = p.matcher(input);
-//	while (m.find()) {
-//	    String[] iam = tokenize(StringEscapeUtils.unescapeXml(m.group(1).toLowerCase()));
-//	    String[] iamlookingfor = tokenize(StringEscapeUtils.unescapeXml(m.group(2).toLowerCase()));
-//	    
-//	}
-//	
-//	printNetwork(network);
-	
-	printAllText(allText);
+	return network;
     }
 
     private static void printAllText(List<String> allText) {
