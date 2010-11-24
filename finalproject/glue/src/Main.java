@@ -7,6 +7,8 @@ import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Formatter;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -45,15 +47,52 @@ public class Main {
 	    if (count == null) {
 		count = 0;
 	    }
-	    outgoing.put(toNode.name, count);
+	    outgoing.put(toNode.name, count + 1);
 	}
 
 	public void addEdgeFrom(WordNode fromNode) {
 	    Integer count = incoming.get(fromNode.name);
-	    if (count == 0) {
+	    if (count == null) {
 		count = 0;
 	    }
-	    incoming.put(fromNode.name, count);
+	    incoming.put(fromNode.name, count + 1);
+	}
+
+	public int assymetry() {
+	    int outDegree = outDegree();
+	    int inDegree = inDegree();
+	    return outDegree == 0 ? 0 : inDegree / outDegree;
+	}
+
+	private int outDegree() {
+	    int outDegree = 0;
+	    for (int i : outgoing.values()) {
+		outDegree += i;
+	    }
+	    return outDegree;
+	}
+
+	private int inDegree() {
+	    int inDegree = 0;
+	    for (int i : incoming.values()) {
+		inDegree += i;
+	    }
+	    return inDegree;
+	}
+
+	@Override
+	public String toString() {
+	    StringBuilder sb = new StringBuilder();
+	    sb.append(name);
+	    sb.append("\nIncoming:");
+	    for (Entry<String, Integer> e : incoming.entrySet()) {
+		sb.append("\n\t" + e.getKey() + ": " + e.getValue());
+	    }
+	    sb.append("\nOutgoing:");
+	    for (Entry<String, Integer> e : outgoing.entrySet()) {
+		sb.append("\n\t" + e.getKey() + ": " + e.getValue());
+	    }
+	    return sb.toString();
 	}
     }
     
@@ -75,6 +114,7 @@ public class Main {
 	    }
 	    return n;
 	}
+	
     }
 
     private static final HashSet<String> IGNORE = new HashSet<String>(Arrays.asList(new String[] { "looking", "for", "i",
@@ -87,49 +127,21 @@ public class Main {
 
 	List<String> allText = new ArrayList<String>();
 
-	Map<String, Map<String, Integer>> iamToIwant = buildNetwork(allText);
+	Graph g = buildNetwork(allText);
+
+	List<WordNode> sortedByAssymetry = new ArrayList<WordNode>();
+	sortedByAssymetry.addAll(g.nodes.values());
+	Collections.sort(sortedByAssymetry, new Comparator<WordNode>() {
+	    @Override
+	    public int compare(WordNode o1, WordNode o2) {
+		return o1.assymetry() - o2.assymetry();
+	    }
+	});
+	for (int i = 0; i < 20; i++) {
+	    System.out.println(sortedByAssymetry.get(i));
+	}
 	// Map from a node to allthe things it wants, with count the number of times it shows up
 	
-	Map<String, Integer> inDegrees = new HashMap<String, Integer>();
-	Map<String, Integer> outDegree = new HashMap<String, Integer>();
-	
-	/*
-	 * Ok, so the out degree is, for each node, the sum of 
-	 */
-	
-	for (Entry<String, Map<String, Integer>> iamNode : iamToIwant.entrySet()) {
-	    String iam = iamNode.getKey();
-	    final Map<String, Integer> iamLinks = iamNode.getValue();
-	    for (Entry<String, Integer> iamToIwantEdge : iamLinks.entrySet()) {
-		String iwant = iamToIwantEdge.getKey();
-		int count = iamToIwantEdge.getValue();
-		Integer inDegree = inDegrees.get(iam);
-		if (inDegree == null) {
-		    inDegree = 0;
-		}
-		inDegrees.put(iam, inDegree + count);
-		
-		
-	    }
-	}
-	
-	Map<String, Map<String, Integer>> iwantToIam = reverseNetwork(iamToIwant);
-	
-	
-
-	printNetwork(iamToIwant);
-	
-	/*
-	 * Building the assymetries. I need to compute for each node the in and out degree. there are two ways of computing this,
-	 * one is by using just the number of edges, another by using the sum of each edge. There's also the problem that I need
-	 * to revert the map, because right now I only have the out degree, not the in degree. Perhaps I need a different representation
-	 * of the graph, something more explicit.
-	 * 
-	 * Ok, let's say I have a Graph class. The class has Nodes, the nodes have Edges. It's still an adjacency-list representation. Or is there a
-	 * better representation? A matrix would be n^2= 
-	 */
-	
-//	printAllText(allText);
     }
 
     private static Map<String, Map<String, Integer>> reverseNetwork(Map<String, Map<String, Integer>> iamToIwant) {
@@ -156,7 +168,7 @@ public class Main {
 	return output;
     }
 
-    private static Map<String, Map<String, Integer>> buildNetwork(List<String> allText)
+    private static Graph buildNetwork(List<String> allText)
 	    throws ParserConfigurationException, SAXException, IOException {
 	DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 	factory.setValidating(false);
@@ -188,37 +200,25 @@ public class Main {
 		Node item = entries.item(j);
 		if (item.getNodeName().equals("RawData")) {
 		    NodeList person = item.getChildNodes();
-		    String[] iAm = null, iAmLookingFor = null;
+		    String[] iamWords = null, lookingforWords = null;
 		    for (int k = 0; k < person.getLength(); k++) {
 			Node theOne = person.item(k);
 			if (theOne.getNodeName().equals("IAm")) {
-			    iAm = tokenize(theOne.getTextContent().toLowerCase());
-			    allText.add(theOne.getTextContent());
+			    iamWords = tokenize(theOne.getTextContent().toLowerCase());
 			}
 			if (theOne.getNodeName().equals("IAmLookingFor")) {
-			    iAmLookingFor = tokenize(theOne.getTextContent().toLowerCase());
-			    allText.add(theOne.getTextContent());
+			    lookingforWords = tokenize(theOne.getTextContent().toLowerCase());
 			}
 		    }
-		    for (String word : iAm) {
-			Map<String, Integer> map = network.get(word);
-			if (map == null) {
-			    map = new HashMap<String, Integer>();
-			    network.put(word, map);
-			}
-			for (String looking : iAmLookingFor) {
-			    g.addEdge(word, looking);
-			    Integer count = map.get(looking);
-			    if (count == null) {
-				count = 0;
-			    }
-			    map.put(looking, count + 1);
+		    for (String iam : iamWords) {
+			for (String looking : lookingforWords) {
+			    g.addEdge(iam, looking);
 			}
 		    }
 		}
 	    }
 	}
-	return network;
+	return g;
     }
 
     private static void printAllText(List<String> allText) {
