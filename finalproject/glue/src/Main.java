@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -29,19 +30,34 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
 import cue.lang.NGramIterator;
+import edu.stanford.nlp.ling.HasWord;
+import edu.stanford.nlp.ling.Sentence;
+import edu.stanford.nlp.ling.TaggedWord;
+import edu.stanford.nlp.parser.lexparser.LexicalizedParser;
+import edu.stanford.nlp.process.DocumentPreprocessor;
+import edu.stanford.nlp.trees.GrammaticalStructure;
+import edu.stanford.nlp.trees.GrammaticalStructureFactory;
+import edu.stanford.nlp.trees.PennTreebankLanguagePack;
+import edu.stanford.nlp.trees.Tree;
+import edu.stanford.nlp.trees.TreePrint;
+import edu.stanford.nlp.trees.TreebankLanguagePack;
 
 public class Main {
 
+    private static final String GRAMMAR_FILE = "/Users/juanmtamayo/Desktop/CS448b/finalproject/stanford-parser-2010-08-20/englishPCFG.ser.gz";
+
+    private static final String SOURCE = "/Users/juanmtamayo/Desktop/CS448b/finalproject/ciwant.xml";
+
     private static class WordNode {
 	final String name;
-	
+
 	Map<String, Integer> outgoing = new HashMap<String, Integer>();
 	Map<String, Integer> incoming = new HashMap<String, Integer>();
-	
+
 	public WordNode(String name) {
 	    this.name = name;
 	}
-	
+
 	public void addEdgeTo(WordNode toNode) {
 	    Integer count = outgoing.get(toNode.name);
 	    if (count == null) {
@@ -95,10 +111,10 @@ public class Main {
 	    return sb.toString();
 	}
     }
-    
+
     private static class Graph {
 	final Map<String, WordNode> nodes = new HashMap<String, WordNode>();
-	
+
 	public void addEdge(String from, String to) {
 	    WordNode fromNode = getNode(from);
 	    WordNode toNode = getNode(to);
@@ -114,19 +130,27 @@ public class Main {
 	    }
 	    return n;
 	}
-	
+
     }
 
-    private static final HashSet<String> IGNORE = new HashSet<String>(Arrays.asList(new String[] { "looking", "for", "i",
-	    "am", "a", "and", "to", "i'm", "who", "someone", "that", "with", "the", "of", "is", "can", "or", "in", "my",
-	    "not", "me", "want", "up", "down", "at", "as", "has", "but", "have", "it", "if", "be", "but", "you", "on", "so", "go", "do" }));
-    
+    private static final HashSet<String> IGNORE = new HashSet<String>(Arrays.asList(new String[] { "looking", "for",
+	    "i", "am", "a", "and", "to", "i'm", "who", "someone", "that", "with", "the", "of", "is", "can", "or", "in",
+	    "my", "not", "me", "want", "up", "down", "at", "as", "has", "but", "have", "it", "if", "be", "but", "you",
+	    "on", "so", "go", "do" }));
+
     private static final int MAX_NGRAM_LENGTH = 1;
+
+    private static LexicalizedParser lp;
 
     public static void main(String[] args) throws IOException, Exception {
 
+	System.out.println("Initializing the parser.");
+	lp = initializeParser();
+	System.out.println("Parser initialized.");
+	
 	List<String> allText = new ArrayList<String>();
 
+	System.out.println("Building the network");
 	Graph g = buildNetwork(allText);
 
 	List<WordNode> sortedByAssymetry = new ArrayList<WordNode>();
@@ -137,17 +161,18 @@ public class Main {
 		return o1.assymetry() - o2.assymetry();
 	    }
 	});
-	for (int i = 0; i < 20; i++) {
-	    System.out.println(sortedByAssymetry.get(i));
+	for (WordNode wordNode : sortedByAssymetry) {
+	    System.out.println(wordNode);
 	}
 	// Map from a node to allthe things it wants, with count the number of times it shows up
-	
+
     }
 
     private static Map<String, Map<String, Integer>> reverseNetwork(Map<String, Map<String, Integer>> iamToIwant) {
 	// Ok, so I take a map that for each node has the edges and the weights. I need to build a map that for each
 	// node 
-	Map<String, Map<String, Integer>> output = new HashMap<String, Map<String,Integer>>();;
+	Map<String, Map<String, Integer>> output = new HashMap<String, Map<String, Integer>>();
+	;
 	for (Entry<String, Map<String, Integer>> entry : iamToIwant.entrySet()) {
 	    String iam = entry.getKey();
 	    final Map<String, Integer> iamLinks = entry.getValue();
@@ -155,7 +180,7 @@ public class Main {
 		String iwant = entry2.getKey();
 		int count = entry2.getValue();
 		Map<String, Integer> iwantLinks = output.get(iwant);
-		if (iwantLinks == null)	 {
+		if (iwantLinks == null) {
 		    iwantLinks = new HashMap<String, Integer>();
 		    output.put(iwant, iwantLinks);
 		}
@@ -168,8 +193,8 @@ public class Main {
 	return output;
     }
 
-    private static Graph buildNetwork(List<String> allText)
-	    throws ParserConfigurationException, SAXException, IOException {
+    private static Graph buildNetwork(List<String> allText) throws ParserConfigurationException, SAXException,
+	    IOException {
 	DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 	factory.setValidating(false);
 	DocumentBuilder builder = factory.newDocumentBuilder();
@@ -177,37 +202,48 @@ public class Main {
 	    @Override
 	    public void warning(SAXParseException exception) throws SAXException {
 	    }
+
 	    @Override
 	    public void fatalError(SAXParseException exception) throws SAXException {
 		System.out.println(exception.getLineNumber());
 	    }
+
 	    @Override
 	    public void error(SAXParseException exception) throws SAXException {
 		System.out.println(exception.getLineNumber());
 	    }
 	});
-	Document document = builder.parse(new File("/afs/ir/users/j/t/jtamayo/shared/cs448b/ciwant.xml"));
-	
+	Document document = builder.parse(new File(SOURCE));
+
 	NodeList childNodes = document.getChildNodes();
 
 	Graph g = new Graph();
-	Map<String, Map<String, Integer>> network = new HashMap<String, Map<String,Integer>>();
-	
+//	Map<String, Map<String, Integer>> network = new HashMap<String, Map<String, Integer>>();
+
+	xml:
 	for (int i = 0; i < childNodes.getLength(); i++) {
 	    Node root = childNodes.item(i);
 	    NodeList entries = root.getChildNodes();
 	    for (int j = 0; j < entries.getLength(); j++) {
 		Node item = entries.item(j);
 		if (item.getNodeName().equals("RawData")) {
+		    System.out.println("persons= " + j);
+		    
+//		    if (j > 3000) break xml;
+		    
 		    NodeList person = item.getChildNodes();
-		    String[] iamWords = null, lookingforWords = null;
+		    List<String> iamWords = new ArrayList<String>();
+		    List<String> lookingforWords = new ArrayList<String>();
 		    for (int k = 0; k < person.getLength(); k++) {
 			Node theOne = person.item(k);
-			if (theOne.getNodeName().equals("IAm")) {
-			    iamWords = tokenize(theOne.getTextContent().toLowerCase());
-			}
-			if (theOne.getNodeName().equals("IAmLookingFor")) {
-			    lookingforWords = tokenize(theOne.getTextContent().toLowerCase());
+			final String textContent = theOne.getTextContent().toLowerCase().trim();
+			if (!"".equals(textContent)) {
+			    if (theOne.getNodeName().equals("IAm")) {
+				iamWords = adjectivize(textContent);
+			    }
+			    if (theOne.getNodeName().equals("IAmLookingFor")) {
+				lookingforWords = adjectivize(textContent);
+			    }
 			}
 		    }
 		    for (String iam : iamWords) {
@@ -219,6 +255,37 @@ public class Main {
 	    }
 	}
 	return g;
+    }
+
+    private static List<String> adjectivize(String lowerCase) {
+	final List<List<? extends HasWord>> sentences = splitSentences(lowerCase);
+	
+	List<String> adjectives = new ArrayList<String>();
+	
+	for (List<? extends HasWord> sentence : sentences) {
+	    final Tree parse = (Tree) lp.apply(sentence);
+	    Sentence<TaggedWord> sent = parse.taggedYield();
+	    
+	    for (TaggedWord taggedWord : sent) {
+		final String tag = taggedWord.tag();
+		if ("JJ".equals(tag) || "JJR".equals(tag) || "JJS".equals(tag)) {
+		    adjectives.add(stem(taggedWord.value()));
+		}
+	    }
+	}
+        return adjectives;
+    }
+
+    private static List<List<? extends HasWord>> splitSentences(String lowerCase) {
+	DocumentPreprocessor p = new DocumentPreprocessor();
+	Reader r = new StringReader(lowerCase); 
+	return p.getSentencesFromText(r);
+    }
+
+    private static LexicalizedParser initializeParser() {
+	LexicalizedParser lp = new LexicalizedParser(GRAMMAR_FILE);
+	lp.setOptionFlags(new String[] { "-maxLength", "140", "-retainTmpSubcategories" });
+	return lp;
     }
 
     private static void printAllText(List<String> allText) {
@@ -234,7 +301,8 @@ public class Main {
 	    Map<String, Integer> map = entry.getValue();
 	    Set<Entry<String, Integer>> set = map.entrySet();
 	    for (Entry<String, Integer> other : set) {
-		if (other.getValue() < 3) continue;
+		if (other.getValue() < 3)
+		    continue;
 		System.out.println(new Formatter().format("%s\t%s\t%d", iam, other.getKey(), other.getValue()));
 	    }
 	}
@@ -259,20 +327,20 @@ public class Main {
 	for (int n = 1; n <= MAX_NGRAM_LENGTH; n++) {
 	    tokens.addAll(tokenizeNGrams(input, n));
 	}
-	return tokens.toArray(new String[]{});
+	return tokens.toArray(new String[] {});
     }
 
     private static Collection<String> tokenizeNGrams(String input, int n) {
 	ArrayList<String> output = new ArrayList<String>();
 	NGramIterator it = new NGramIterator(n, input);
-	ngram:
-	while (it.hasNext()) {
+	ngram: while (it.hasNext()) {
 	    String string = (String) it.next();
 	    String[] components = string.split(" ");
 	    StringBuilder result = new StringBuilder();
 	    for (int i = 0; i < components.length; i++) {
 		final String component = components[i];
-		if (IGNORE.contains(component)) continue ngram;
+		if (IGNORE.contains(component))
+		    continue ngram;
 		result.append(stem(component));
 		if (i != components.length - 1) {
 		    result.append(" ");
