@@ -1,3 +1,4 @@
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -22,6 +23,14 @@ public class Graph {
 		nodes.add(source);
 		nodes.add(dest);
 	}
+
+    public Set<String> getNodes() {
+        return Collections.unmodifiableSet(nodes);
+    }
+
+    public Map<Edge, Integer> getEdges() {
+        return Collections.unmodifiableMap(edges);
+    }
 	
 	
 }

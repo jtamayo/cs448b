@@ -2,8 +2,6 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/cue.language"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/Apache commons"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/stanford nlp"/>
 	<classpathentry kind="lib" path="lib/datalib.jar"/>
 	<classpathentry kind="output" path="bin"/>
