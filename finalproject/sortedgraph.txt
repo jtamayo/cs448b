@@ -12793,4 +12793,3 @@ afraid	few	1
 will	individu	1
 energet	respect	1
 care	round	2
-%%stems%%

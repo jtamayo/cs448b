@@ -28,6 +28,7 @@ var vis = new pv.Panel()
 var layout = vis.add(pv.Layout.Matrix)
     .nodes(wantme.nodes)
     .links(wantme.links)
+	.directed(true)
     .sort(function(a, b) b.group - a.group);
 
 layout.link.add(pv.Bar)
