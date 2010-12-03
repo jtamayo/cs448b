@@ -84,16 +84,40 @@ public class MatrixViewSorter {
         
         // get sorted indices for nodes
         int[] s = c.sort();
+        int[] g = c.groups();
         
+//        printTextFile(nodes, sources, targets, weights, src, s, g);
+        printJsonFile(nodes, sources, targets, weights, src, s, g);
+    }
+
+    private static void printJsonFile(List<String> nodes, List<Integer> sources, List<Integer> targets,
+            List<Integer> weights, int[] src, int[] s, int[] g) {
+        System.out.println("var wantme = {");
+        System.out.println("nodes: [");
+        for (int i = 0; i < s.length; i++) {
+            System.out.println("{nodeName: \"" + nodes.get(s[i]) + "\", group: " + g[i] + "},");
+        }
+        System.out.println("],");
+        System.out.println("links: [");
+
+        for (int i = 0; i < src.length; i++) {
+            System.out.println("{source:" + sources.get(i) +", target:" + targets.get(i) + ", value:" + weights.get(i) + "},");
+        }
+        
+        System.out.println("]");
+        System.out.println("};");
+    }
+
+    private static void printTextFile(List<String> nodes, List<Integer> sources, List<Integer> targets,
+            List<Integer> weights, int[] src, int[] s, int[] g) {
         System.out.println("%%nodes%%");
         for (int i = 0; i < s.length; i++) {
-            System.out.println(nodes.get(s[i]));
+            System.out.println(nodes.get(s[i]) + "\t" + g[i]);
         }
         System.out.println("%%edges%%");
         for (int i = 0; i < src.length; i++) {
             System.out.println(nodes.get(sources.get(i)) + "\t" + nodes.get(targets.get(i)) + "\t" + weights.get(i));
         }
         System.out.println("%%stems%%");
-        
     }
 }
