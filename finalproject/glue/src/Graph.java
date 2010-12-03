@@ -31,6 +31,17 @@ public class Graph {
     public Map<Edge, Integer> getEdges() {
         return Collections.unmodifiableMap(edges);
     }
+
+    public void addEdge(String source, String dest, int weight) {
+        Edge e = new Edge(source, dest);
+        Integer oldWeight = edges.get(e);
+        if (oldWeight == null) {
+            oldWeight = 0;
+        }
+        edges.put(e, oldWeight + weight);
+        nodes.add(source);
+        nodes.add(dest);
+    }
 	
 	
 }
