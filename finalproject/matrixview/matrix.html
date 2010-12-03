@@ -4,7 +4,7 @@
     <title>Matrix Diagram</title>
     <link type="text/css" rel="stylesheet" href="ex.css?3.2"/>
     <script type="text/javascript" src="protovis-d3.2.js"></script>
-    <script type="text/javascript" src="miserables.js"></script>
+    <script type="text/javascript" src="wantme.js"></script>
     <style type="text/css">
 
 #fig {
@@ -26,8 +26,8 @@ var vis = new pv.Panel()
     .left(90);
 
 var layout = vis.add(pv.Layout.Matrix)
-    .nodes(miserables.nodes)
-    .links(miserables.links)
+    .nodes(wantme.nodes)
+    .links(wantme.links)
     .sort(function(a, b) b.group - a.group);
 
 layout.link.add(pv.Bar)
