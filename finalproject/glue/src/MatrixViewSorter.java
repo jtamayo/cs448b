@@ -95,12 +95,15 @@ public class MatrixViewSorter {
         System.out.println("var wantme = {");
         System.out.println("nodes: [");
         for (int i = 0; i < s.length; i++) {
+            if (g[i] > 5) continue;
             System.out.println("{nodeName: \"" + nodes.get(s[i]) + "\", group: " + g[i] + "},");
         }
         System.out.println("],");
         System.out.println("links: [");
 
         for (int i = 0; i < src.length; i++) {
+            if (g[sources.get(i)] > 5) continue;
+            if (g[targets.get(i)] > 5) continue; 
             System.out.println("{source:" + sources.get(i) +", target:" + targets.get(i) + ", value:" + weights.get(i) + "},");
         }
         
