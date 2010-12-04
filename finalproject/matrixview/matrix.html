@@ -3,8 +3,8 @@
   <head>
     <title>Matrix Diagram</title>
     <link type="text/css" rel="stylesheet" href="ex.css?3.2"/>
-    <script type="text/javascript" src="protovis-d3.2.js"></script>
-    <script type="text/javascript" src="wantme.js"></script>
+    <script type="text/javascript" src="../protovis-d3.2.js"></script>
+    <script type="text/javascript" src="../wantme.js"></script>
     <style type="text/css">
 
 #fig {
@@ -29,14 +29,15 @@ var layout = vis.add(pv.Layout.Matrix)
     .nodes(wantme.nodes)
     .links(wantme.links)
 	.directed(true)
-    .sort(function(a, b) b.group - a.group);
+     .sort(function(a, b) b.group - a.group)
+		;
 
 layout.link.add(pv.Bar)
     .fillStyle(function(l) l.linkValue
         ? ((l.targetNode.group == l.sourceNode.group)
-        ? color(l.sourceNode) : "#555") : "#eee")
+        ? color(l.sourceNode) : "#bbb") : "#fff")
     .antialias(false)
-    .lineWidth(1);
+    .lineWidth(0);
 
 layout.label.add(pv.Label)
     .textStyle(color);

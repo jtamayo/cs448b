@@ -45,7 +45,7 @@ public class NetworkFilter {
         
 
         System.out.println("%%nodes%%");
-        final List<String> subList = sortedNodes.subList(0, 300);
+        final List<String> subList = sortedNodes.subList(0, 100);
         for (String node : subList) {
             System.out.println(node);
         }
