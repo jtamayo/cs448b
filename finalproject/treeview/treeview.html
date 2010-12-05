@@ -60,6 +60,15 @@ var runSum = []
 var i;
 var sum = 0;
 
+var indegree = pv.range(0, 300, 1).map(function(x) {
+    return {x: x, y: Math.sin(x) + Math.random() + 2};
+  });
+var outdegree = pv.range(0, 300, 1).map(function(x) {
+    return {x: x, y: Math.sin(x) + Math.random() + 2};
+  });
+var inx = pv.Scale.linear(0, 4).range(0, 2*column)
+var y = pv.Scale.linear(indegree, function(d) {return d.x}).range(0, sh)
+
 var incoming = [
 {node: "old", count: 1},
 {node: "secur", count: 1},
@@ -126,32 +135,48 @@ var vis = new pv.Panel()
     .top(0)
     .left(0);
 
-// Setup the layout
-var leftmost = vis.add(pv.Panel)
+var sliders = vis.add(pv.Panel)
 	.width(4*column)
 	.top(0)
 	.left(0)
+	.strokeStyle("#888")
+	.lineWidth(1)
+
+// Setup the layout
+var leftmost = vis.add(pv.Panel)
+	.width(2*column)
+	.top(0)
+	.left(4*column)
+	.strokeStyle("#888")
+	.lineWidth(1)
 
 var midleft = vis.add(pv.Panel)
 	.width(2*column)
 	.top(0)
-	.left(4*column)
-
+	.left(6*column)
+	.strokeStyle("#888")
+	.lineWidth(1)
 
 var midright = vis.add(pv.Panel)
 	.width(2*column)
 	.top(0)
-	.left(10*column)
+	.left(12*column)
+	.strokeStyle("#888")
+	.lineWidth(1)
 
 var rightmost = vis.add(pv.Panel)
-	.width(4*column)
+	.width(2*column)
 	.top(0)
-	.left(12*column)
+	.left(14*column)
+	.strokeStyle("#888")
+	.lineWidth(1)
 
 var middle = vis.add(pv.Panel)
 	.width(4*column)
 	.top(0)
-	.left(6*column)
+	.left(8*column)
+	.strokeStyle("#888")
+	.lineWidth(1)
 	
 // Add the words to the left panel. Sort them by prevalence, 
 var funkyincoming = funkysort(incoming)
@@ -250,6 +275,15 @@ middle.add(pv.Label)
 	.textBaseline("middle")
 	.textAlign("center")
 	.font("5em Helvetica, Arial, sans-serif")
+
+/* The area with top line. */
+vis.add(pv.Area)
+    .data(indegree)
+	.left(2*column)
+    .top(function(d) {return inx(d.x)})
+    .width(function(d) {return y(d.y)})
+    .fillStyle("rgb(121,173,210)")
+
 
 vis.render();
 
