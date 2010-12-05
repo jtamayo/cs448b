@@ -9,10 +9,16 @@ public class Edge {
 
 	private final String dest;
 	private final String source;
+	private int count;
 
-	public Edge(String source, String dest) {
+	public Edge(String source, String dest, int count) {
 		this.source = source;
 		this.dest = dest;
+		this.count = 0;
+	}
+	
+	public Edge(String source, String dest) {
+	    this(source, dest, 0);
 	}
 
 	public String getDest() {
@@ -22,6 +28,14 @@ public class Edge {
 	public String getSource() {
 		return source;
 	}
+	
+	public int getCount() {
+        return count;
+    }
+	
+	public void setCount(int count) {
+        this.count = count;
+    }
 
 	@Override
 	public int hashCode() {

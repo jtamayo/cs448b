@@ -4,9 +4,8 @@
     <title>Tree view</title>
     <link type="text/css" rel="stylesheet" href="ex.css?3.2"/>
     <script type="text/javascript" src="../protovis-d3.2.js"></script>
+    <script type="text/javascript" src="wantme.js"></script>
     <script type="text/javascript" src="treeview.js"></script>
-    <script type="text/javascript" src="../100nodes.js"></script>
-	
     <style type="text/css">
 
 #fig {
@@ -22,10 +21,6 @@
  * TODO: 
  * - Tweak the alignment of the center word so the word is in the center of the cones
  * - Add "..." to show words that can't fit on the screen
- * - Remove "i"
- * - Unstem
- * - Bigrams
- * - change font and background
  */
 		
 /*
@@ -33,7 +28,6 @@
  * - Rightmost panel for the origin
  * - Middle panel for the center word
  * - Right panel for the dest word
- * 
  * 
  * There's also two panels in the middle that contain the edges between the words.
  * 
@@ -59,20 +53,81 @@ Array.method('reduce', function (f, value) {
 var font = "Helvetica, Arial, sans-serif"
 var color = pv.Colors.category19().by(function(d) { return d.group });
 var column = 60; // Width of a single column
-var word = "old"
+var word = "shy"
 var wordHeight = 15
 var sh = 675
 var runSum = []
 var i;
 var sum = 0;
-var panelBorder = 0;
 
-var inx = pv.Scale.linear(0, pv.max(nodes, function(n) { return n.indegree})).range(0, 2*column)
-var outx = pv.Scale.linear(0, pv.max(nodes, function(n) { return n.outdegree})).range(0, 2*column)
-var y = pv.Scale.linear(0, nodes.length).range(10, 640) 
+var indegree = pv.range(0, 300, 1).map(function(x) {
+    return {x: x, y: Math.sin(x) + Math.random() + 2};
+  });
+var outdegree = pv.range(0, 300, 1).map(function(x) {
+    return {x: x, y: Math.sin(x) + Math.random() + 2};
+  });
+var inx = pv.Scale.linear(0, 4).range(0, 2*column)
+var y = pv.Scale.linear(indegree, function(d) {return d.x}).range(0, sh)
 
-var incoming = inedges[word];
-var outgoing = outedges[word];
+var incoming = [
+{node: "old", count: 1},
+{node: "secur", count: 1},
+{node: "white", count: 2},
+{node: "superfici", count: 1},
+{node: "beauti", count: 1},
+{node: "introvert", count: 1},
+{node: "quiet", count: 1},
+{node: "materialist", count: 1},]
+var outgoing = [
+{node: "brave", count: 1},
+{node: "romant", count: 1},
+{node: "singl", count: 2},
+{node: "least", count: 1},
+{node: "seriou", count: 1},
+{node: "next", count: 1},
+{node: "substanti", count: 1},
+{node: "higher", count: 1},
+{node: "intellig", count: 3},
+{node: "good", count: 3},
+{node: "same", count: 1},
+{node: "honest", count: 3},
+{node: "independ", count: 1},
+{node: "slim", count: 2},
+{node: "more", count: 1},
+{node: "southern", count: 1},
+{node: "easi", count: 1},
+{node: "funni", count: 1},
+{node: "casual", count: 1},
+{node: "practic", count: 1},
+{node: "care", count: 1},
+{node: "mind", count: 1},
+{node: "sure", count: 1},
+{node: "taller", count: 1},
+{node: "confid", count: 1},
+{node: "respons", count: 1},
+{node: "matur", count: 1},
+{node: "shallow", count: 1},
+{node: "signific", count: 1},
+{node: "white", count: 1},
+{node: "true", count: 1},
+{node: "capabl", count: 1},
+{node: "averag", count: 2},
+{node: "meaning", count: 1},
+{node: "fun", count: 1},
+{node: "attract", count: 3},
+{node: "marri", count: 1},
+{node: "content", count: 1},
+{node: "great", count: 1},
+{node: "sweet", count: 1},
+{node: "afraid", count: 1},
+{node: "strong", count: 2},
+{node: "comfort", count: 1},
+{node: "shoulder", count: 1},
+{node: "high", count: 1},
+{node: "big", count: 1},
+{node: "shorter", count: 1},
+{node: "smart", count: 1}
+]
 
 var vis = new pv.Panel()
     .width(960)
@@ -85,7 +140,7 @@ var sliders = vis.add(pv.Panel)
 	.top(0)
 	.left(0)
 	.strokeStyle("#888")
-	.lineWidth(panelBorder)
+	.lineWidth(1)
 
 // Setup the layout
 var leftmost = vis.add(pv.Panel)
@@ -93,35 +148,35 @@ var leftmost = vis.add(pv.Panel)
 	.top(0)
 	.left(4*column)
 	.strokeStyle("#888")
-	.lineWidth(panelBorder)
+	.lineWidth(1)
 
 var midleft = vis.add(pv.Panel)
 	.width(2*column)
 	.top(0)
 	.left(6*column)
 	.strokeStyle("#888")
-	.lineWidth(panelBorder)
+	.lineWidth(1)
 
 var midright = vis.add(pv.Panel)
 	.width(2*column)
 	.top(0)
 	.left(12*column)
 	.strokeStyle("#888")
-	.lineWidth(panelBorder)
+	.lineWidth(1)
 
 var rightmost = vis.add(pv.Panel)
 	.width(2*column)
 	.top(0)
 	.left(14*column)
 	.strokeStyle("#888")
-	.lineWidth(panelBorder)
+	.lineWidth(1)
 
 var middle = vis.add(pv.Panel)
 	.width(4*column)
 	.top(0)
 	.left(8*column)
 	.strokeStyle("#888")
-	.lineWidth(panelBorder)
+	.lineWidth(1)
 	
 // Add the words to the left panel. Sort them by prevalence, 
 var funkyincoming = funkysort(incoming)
@@ -129,7 +184,7 @@ leftmost.add(pv.Label)
 	.data(funkyincoming)
 	.right(0)
 	.top(function(d) {return sh/2 + (-funkyincoming.length/2 + this.index + 1)*wordHeight })
-	.text(function(d) {return d.src})
+	.text(function(d) {return d.node})
 	.textBaseline("middle")
 	.textAlign("right")
 	.font("1.4em Helvetica, Arial, sans-serif")
@@ -158,7 +213,7 @@ rightmost.add(pv.Label)
 	.data(funkyoutgoing)
 	.left(0)
 	.top(function(d) {return sh/2 + (-funkyoutgoing.length/2 + this.index + 1)*wordHeight })
-	.text(function(d) {return d.dest})
+	.text(function(d) {return d.node})
 	.textBaseline("middle")
 	.textAlign("left")
 	.font("1.4em Helvetica, Arial, sans-serif")
@@ -181,19 +236,18 @@ midright.add(pv.Panel)
 	.interpolate("basis")
     .left(function(d) {return d.x})
     .top(function(d) {return d.y})
-
 	
-//middle.add(pv.Line)
-//	.data([	{x: 0, y: sh/2 + incomingSum/2},
-//			{x: 2*column, y: sh/2},
-//			{x: 4*column, y: sh/2 + outgoingSum/2},
-//			{x: 4*column, y: sh/2 - outgoingSum/2},
-//			{x: 2*column, y: sh/2},
-//			{x: 0*column, y: sh/2 - incomingSum/2}])
-//	.fillStyle("#DDD")
-//	.left(function(d) {return d.x})
-//    .top(function(d) {return d.y})
-//	.lineWidth(0)
+middle.add(pv.Line)
+	.data([	{x: 0, y: sh/2 + incomingSum/2},
+			{x: 2*column, y: sh/2},
+			{x: 4*column, y: sh/2 + outgoingSum/2},
+			{x: 4*column, y: sh/2 - outgoingSum/2},
+			{x: 2*column, y: sh/2},
+			{x: 0*column, y: sh/2 - incomingSum/2}])
+	.fillStyle("#DDD")
+	.left(function(d) {return d.x})
+    .top(function(d) {return d.y})
+	.lineWidth(0)
 
 // Add marks for the width of the cones
 middle.add(pv.Line)
@@ -203,7 +257,6 @@ middle.add(pv.Line)
     .top(function(d) {return d.y})
 	.strokeStyle("#F00")
 	.lineWidth(4)
-	.antialias(false);
 
 middle.add(pv.Line)
 	.data([ {x: 0*column, y: sh/2 - incomingSum/2},
@@ -212,7 +265,6 @@ middle.add(pv.Line)
     .top(function(d) {return d.y})
 	.strokeStyle("#00F")
 	.lineWidth(4)
-	.antialias(false);
 
 // Add the words at the center, left and right
 middle.add(pv.Label)
@@ -225,21 +277,12 @@ middle.add(pv.Label)
 	.font("5em Helvetica, Arial, sans-serif")
 
 /* The area with top line. */
-sliders.add(pv.Area)
-    .data(nodes)
+vis.add(pv.Area)
+    .data(indegree)
 	.left(2*column)
-    .top(function(d) {return y(this.index)})
-    .width(function(d) {return inx(d.indegree)})
+    .top(function(d) {return inx(d.x)})
+    .width(function(d) {return y(d.y)})
     .fillStyle("rgb(121,173,210)")
-
-sliders.add(pv.Area)
-    .data(nodes)
-	.right(2*column)
-    .top(function(d) {return y(this.index)})
-    .width(function(d) {return outx(d.outdegree)})
-    .fillStyle("rgb(173,121,210)")
-
-nodes.sort(function(a, b) {return (a.indegree - a.outdegree) - (b.indegree - b.outdegree)})
 
 
 vis.render();
