@@ -24,7 +24,13 @@ function funkysort(input){
         funkysort[j] = array[i];
         j++;
     }
-    return funkysort;
+    return input.slice(0, input.length).sort(function(a, b){
+		if (a.count === b.count) {
+			return (a.node < b.node) ? -1 : 1  
+		} else {
+			return - a.count + b.count
+		}
+    });
 }
 
 // Computes the running sum of an array

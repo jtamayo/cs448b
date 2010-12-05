@@ -97,6 +97,7 @@ public class Main {
                     NodeList person = item.getChildNodes();
                     List<String> iamWords = new ArrayList<String>();
                     List<String> lookingforWords = new ArrayList<String>();
+                    String ia
                     for (int k = 0; k < person.getLength(); k++) {
                         Node theOne = person.item(k);
                         final String textContent = theOne.getTextContent().toLowerCase().trim();

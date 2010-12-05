@@ -15,9 +15,9 @@
 }
 
 #fulltext {
-	font: 1em Helvetica, Arial, sans-serif;
+	font: 0.7em Helvetica, Arial, sans-serif;
 	position: absolute;
-	top: 300px;
+	top: 500px;
 	left: 512px;
 	width: 256px;
 	text-align: justify;
@@ -79,7 +79,7 @@ var sh = 675
 var runSum = []
 var i;
 var sum = 0;
-var panelBorder = 0;
+var panelBorder = 1 ;
 
 var inx = pv.Scale.linear(0, pv.max(nodes, function(n) { return n.indegree})).range(0, 2*column)
 var outx = pv.Scale.linear(0, pv.max(nodes, function(n) { return n.outdegree})).range(0, 2*column)
@@ -110,16 +110,16 @@ var leftmost = vis.add(pv.Panel)
 	.lineWidth(panelBorder)
 
 var midleft = vis.add(pv.Panel)
-	.width(1*column)
+	.width(2*column)
 	.top(0)
 	.left(6*column)
 	.strokeStyle("#888")
 	.lineWidth(panelBorder)
 
 var midright = vis.add(pv.Panel)
-	.width(1*column)
+	.width(2*column)
 	.top(0)
-	.left(13*column)
+	.left(12*column)
 	.strokeStyle("#888")
 	.lineWidth(panelBorder)
 
@@ -131,9 +131,9 @@ var rightmost = vis.add(pv.Panel)
 	.lineWidth(panelBorder)
 
 var middle = vis.add(pv.Panel)
-	.width(6*column)
+	.width(4*column)
 	.top(0)
-	.left(7*column)
+	.left(8*column)
 	.strokeStyle("#888")
 	.lineWidth(panelBorder)
 	
@@ -157,11 +157,11 @@ midleft.add(pv.Panel)
 		var ret = [
 			{x: 0*column, y: sh/2 + (-funkyincoming.length/2 + this.parent.index + 1)*wordHeight},
 			{x: 0.5*column, y: sh/2 + (-funkyincoming.length/2 + this.parent.index + 1)*wordHeight},
-			{x: 0.5*column, y: sh/2 - 200 + (-Math.floor(incomingSum/2) + incomingRunSum[this.parent.index])},
-			{x: 1*column, y: sh/2 - 200+ (-Math.floor(incomingSum/2) + incomingRunSum[this.parent.index])},
+			{x: 1.5*column, y: sh/2 + (-Math.floor(incomingSum/2) + incomingRunSum[this.parent.index])},
+			{x: 2*column, y: sh/2 + (-Math.floor(incomingSum/2) + incomingRunSum[this.parent.index])},
 		]
 		return ret})
-	.strokeStyle("#DDD")
+	.strokeStyle("#888")
 	.lineWidth(function(_, d) {return d.count})
 	.interpolate("basis")
     .left(function(d) {return d.x})
@@ -184,13 +184,13 @@ midright.add(pv.Panel)
   .add(pv.Line)
   	.data(function(d) { 
 		var ret = [
-			{x: 0*column, y: sh/2 - 200 + (-Math.floor(outgoingSum/2) + outgoingRunSum[this.parent.index])},
-			{x: 0.5*column, y: sh/2 - 200 + (-Math.floor(outgoingSum/2) + outgoingRunSum[this.parent.index])},
-			{x: 0.5*column, y: sh/2 + (-funkyoutgoing.length/2 + this.parent.index + 1)*wordHeight},
-			{x: 1*column, y: sh/2 + (-funkyoutgoing.length/2 + this.parent.index + 1)*wordHeight},
+			{x: 0*column, y: sh/2 + (-Math.floor(outgoingSum/2) + outgoingRunSum[this.parent.index])},
+			{x: 0.5*column, y: sh/2 + (-Math.floor(outgoingSum/2) + outgoingRunSum[this.parent.index])},
+			{x: 1.5*column, y: sh/2 + (-funkyoutgoing.length/2 + this.parent.index + 1)*wordHeight},
+			{x: 2*column, y: sh/2 + (-funkyoutgoing.length/2 + this.parent.index + 1)*wordHeight},
 		]
 		return ret})
-	.strokeStyle("#DDD")
+	.strokeStyle("#888")
 	.lineWidth(function(_, d) {return d.count})
 	.interpolate("basis")
     .left(function(d) {return d.x})
@@ -211,9 +211,8 @@ midright.add(pv.Panel)
 
 // Add marks for the width of the cones
 middle.add(pv.Line)
-	.data(function() { return [
-			{x: 6*column, y: sh/2 - 200 - outgoingSum/2},
-			{x: 6*column, y: sh/2 - 200 + outgoingSum/2},]})
+	.data(function() { return [{x: 4*column, y: sh/2 - outgoingSum/2},
+			{x: 4*column, y: sh/2 + outgoingSum/2},]})
 	.left(function(d) {return d.x})
     .top(function(d) {return d.y})
 	.strokeStyle("#F00")
@@ -221,9 +220,8 @@ middle.add(pv.Line)
 	.antialias(false);
 
 middle.add(pv.Line)
-	.data(function() { return [
-			{x: 0*column, y: sh/2 - 200 - incomingSum/2},
-			{x: 0*column, y: sh/2 - 200 + incomingSum/2},]})
+	.data(function() { return [{x: 0*column, y: sh/2 - incomingSum/2},
+			{x: 0*column, y: sh/2 + incomingSum/2},]})
 	.left(function(d) {return d.x})
     .top(function(d) {return d.y})
 	.strokeStyle("#00F")
@@ -234,7 +232,7 @@ middle.add(pv.Line)
 middle.add(pv.Label)
 	.data(function () {return [word];})
 	.left(2*column)
-	.top(sh/2 - 200)
+	.top(sh/2)
 	.width(4*column)
 	.textBaseline("middle")
 	.textAlign("center")
