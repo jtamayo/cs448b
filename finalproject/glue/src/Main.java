@@ -1,6 +1,8 @@
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -118,7 +120,34 @@ public class Main {
             sb.append(",");
             System.out.println(sb);
         }
-        System.out.println("}");
+        System.out.println("};");
+        
+        System.out.println("stems = {");
+        for (Entry<String, List<String>> e : stemmer.getStems().entrySet()) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("\"");
+            sb.append(e.getKey());
+            sb.append("\": \"");
+            sb.append(mostPopular(e.getValue()));
+            sb.append("\",");
+            System.out.println(sb);
+        }
+        System.out.println("};");
+    }
+
+    private static String mostPopular(List<String> strings) {
+        Map<String, Integer> counts = new HashMap<String, Integer>();
+        for (String s : strings) {
+            Integer count = counts.get(s);
+            if (count == null) count = 0;
+            counts.put(s, count + 1);
+        }
+        Entry<String, Integer> max = Collections.max(counts.entrySet(), new Comparator<Entry<String, Integer>>() {
+            public int compare(Entry<String, Integer> o1, Entry<String, Integer> o2) {
+                return o1.getValue() - o2.getValue();
+            }
+        });
+        return max.getKey();
     }
 
     private static void printEdges(Graph g, final Map<String, List<Edge>> edges) {
@@ -211,7 +240,7 @@ public class Main {
             Node root = childNodes.item(i);
             NodeList entries = root.getChildNodes();
             for (int j = 0; j < entries.getLength(); j++) {
-                if (j > 200) break;
+//                if (j > 200) break;
                 Node item = entries.item(j);
                 if (item.getNodeName().equals("RawData")) {
                     System.err.println("persons= " + j);

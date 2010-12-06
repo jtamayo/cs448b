@@ -20,7 +20,7 @@ public class Adjectivizer {
 
     private final LexicalizedParser lp;
     private final CS448bStemmer stemmer;
-    private final Map<String, List<String>> stemsToSentences = new HashMap<String, List<String>>();
+//    private final Map<String, List<String>> stemsToSentences = new HashMap<String, List<String>>();
     
     
     public Adjectivizer(String grammarFile, CS448bStemmer stemmer) {
@@ -42,7 +42,7 @@ public class Adjectivizer {
                 final String tag = taggedWord.tag();
                 if ("JJ".equals(tag) || "JJR".equals(tag) || "JJS".equals(tag)) {
                     final String stem = stemmer.stem(taggedWord.value());
-                    remember(stem, sentence);
+//                    remember(stem, sentence);
                     adjectives.add(stem);
                 }
             }
@@ -50,19 +50,19 @@ public class Adjectivizer {
         return adjectives;
     }
 
-    private void remember(String stem, List<? extends HasWord> sentence) {
-        StringBuilder sb = new StringBuilder();
-        for (HasWord word : sentence) {
-            sb.append(word.word());
-            sb.append(" ");
-        }
-        List<String> sentences = stemsToSentences.get(stem);
-        if (sentences == null) {
-            sentences = new ArrayList<String>();
-            stemsToSentences.put(stem, sentences);
-        }
-        sentences.add(sb.toString());
-    }
+//    private void remember(String stem, List<? extends HasWord> sentence) {
+//        StringBuilder sb = new StringBuilder();
+//        for (HasWord word : sentence) {
+//            sb.append(word.word());
+//            sb.append(" ");
+//        }
+//        List<String> sentences = stemsToSentences.get(stem);
+//        if (sentences == null) {
+//            sentences = new ArrayList<String>();
+//            stemsToSentences.put(stem, sentences);
+//        }
+//        sentences.add(sb.toString());
+//    }
 
     private static List<List<? extends HasWord>> splitSentences(String lowerCase) {
         DocumentPreprocessor p = new DocumentPreprocessor();
