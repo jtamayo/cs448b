@@ -118,6 +118,33 @@ var m = {
 var indexthing = 25;
 m.updateWord(nodes[indexthing].node);
 
+var sorters = {
+	byindegree: function(a,b) {
+		if (a.indegree === b.indegree) {
+			return (a.node < b.node) ? -1 : 1;
+		} else {
+			return a.indegree - b.indegree;
+		}
+	},
+	byoutdegree: function(a,b) {
+		if (a.outdegree === b.outdegree) {
+			return (a.node < b.node) ? -1 : 1;
+		} else {
+			return a.outdegree - b.outdegree;
+		}
+	},
+	byassymetry: function(a,b) {
+		var assymetry = (a.indegree - a.outdegree) - (b.indegree - b.outdegree);
+		if (assymetry === 0) {
+			return (a.node < b.node) ? -1 : 1;
+		} else {
+			return assymetry;
+		}
+	}
+}
+
+nodes.sort(sorters.byassymetry);
+
 /*
  * What's the basic state of the visualization?
  * - Word in the center
@@ -318,7 +345,6 @@ sliders.events("all")
     .event("mousedown", pv.Behavior.point().collapse("x"))
 //    .event("mouseover", pv.Behavior.point().collapse("x"));
 
-nodes.sort(function(a, b) {return (a.indegree - a.outdegree) - (b.indegree - b.outdegree)})
 
 
 vis.render();
