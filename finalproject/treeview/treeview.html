@@ -6,6 +6,7 @@
     <script type="text/javascript" src="../protovis-d3.2.js"></script>
     <script type="text/javascript" src="treeview.js"></script>
     <script type="text/javascript" src="../100nodes.js"></script>
+		<script type="text/javascript" src="../smalltest.js"></script>
 	
     <style type="text/css">
 
@@ -15,7 +16,7 @@
 }
 
 #fulltext {
-	font: 1em Helvetica, Arial, sans-serif;
+	font: 1em Gill Sans, Helvetica, Arial, sans-serif;
 	position: absolute;
 	top: 300px;
 	left: 512px;
@@ -41,6 +42,7 @@
  * - change font and background
  * - fix font size of middle word
  * - Tweak the alignment of the full text
+ * - Tweak the side columns, start centered but don't grow beyond the top
  */
 		
 /*
@@ -71,7 +73,7 @@ Array.method('reduce', function (f, value) {
 });
 
 
-var font = "Helvetica, Arial, sans-serif"
+var font = "Gill Sans, Helvetica, Arial, sans-serif"
 var column = 64; // Width of a single column
 var word = "honest"
 var wordHeight = 15
@@ -142,11 +144,11 @@ var funkyincoming = funkysort(incoming)
 leftmost.add(pv.Label)
 	.data(function() {return funkyincoming})
 	.right(0)
-	.top(function(d) {return sh/2 + (-funkyincoming.length/2 + this.index + 1)*wordHeight })
+	.top(function(d) {return (this.index)*wordHeight })
 	.text(function(d) {return d.src})
-	.textBaseline("middle")
+	.textBaseline("top")
 	.textAlign("right")
-	.font("1.4em Helvetica, Arial, sans-serif")
+	.font("1.4em Gill Sans, Helvetica, Arial, sans-serif")
 
 var incomingRunSum = runsum(funkyincoming)
 var incomingSum = incomingRunSum[incomingRunSum.length - 1]
@@ -155,8 +157,8 @@ midleft.add(pv.Panel)
   .add(pv.Line)
   	.data(function(d) { 
 		var ret = [
-			{x: 0*column, y: sh/2 + (-funkyincoming.length/2 + this.parent.index + 1)*wordHeight},
-			{x: 0.5*column, y: sh/2 + (-funkyincoming.length/2 + this.parent.index + 1)*wordHeight},
+			{x: 0*column, y: (this.parent.index + 0.5)*wordHeight},
+			{x: 0.5*column, y: (this.parent.index + 0.5)*wordHeight},
 			{x: 0.5*column, y: sh/2 - 200 + (-Math.floor(incomingSum/2) + incomingRunSum[this.parent.index])},
 			{x: 1*column, y: sh/2 - 200+ (-Math.floor(incomingSum/2) + incomingRunSum[this.parent.index])},
 		]
@@ -171,11 +173,11 @@ funkyoutgoing = funkysort(outgoing)
 rightmost.add(pv.Label)
 	.data(function() {return funkyoutgoing})
 	.left(0)
-	.top(function(d) {return sh/2 + (-funkyoutgoing.length/2 + this.index + 1)*wordHeight })
+	.top(function(d) {return this.index*wordHeight })
 	.text(function(d) {return d.dest})
-	.textBaseline("middle")
+	.textBaseline("top")
 	.textAlign("left")
-	.font("1.4em Helvetica, Arial, sans-serif")
+	.font("1.4em Gill Sans, Helvetica, Arial, sans-serif")
 	
 var outgoingRunSum = runsum(funkyoutgoing)
 var outgoingSum = outgoingRunSum[outgoingRunSum.length - 1]
@@ -186,8 +188,8 @@ midright.add(pv.Panel)
 		var ret = [
 			{x: 0*column, y: sh/2 - 200 + (-Math.floor(outgoingSum/2) + outgoingRunSum[this.parent.index])},
 			{x: 0.5*column, y: sh/2 - 200 + (-Math.floor(outgoingSum/2) + outgoingRunSum[this.parent.index])},
-			{x: 0.5*column, y: sh/2 + (-funkyoutgoing.length/2 + this.parent.index + 1)*wordHeight},
-			{x: 1*column, y: sh/2 + (-funkyoutgoing.length/2 + this.parent.index + 1)*wordHeight},
+			{x: 0.5*column, y: (this.parent.index + 0.5)*wordHeight},
+			{x: 1*column, y: (this.parent.index + 0.5)*wordHeight},
 		]
 		return ret})
 	.strokeStyle("#DDD")
@@ -195,19 +197,6 @@ midright.add(pv.Panel)
 	.interpolate("basis")
     .left(function(d) {return d.x})
     .top(function(d) {return d.y})
-
-	
-//middle.add(pv.Line)
-//	.data([	{x: 0, y: sh/2 + incomingSum/2},
-//			{x: 2*column, y: sh/2},
-//			{x: 4*column, y: sh/2 + outgoingSum/2},
-//			{x: 4*column, y: sh/2 - outgoingSum/2},
-//			{x: 2*column, y: sh/2},
-//			{x: 0*column, y: sh/2 - incomingSum/2}])
-//	.fillStyle("#DDD")
-//	.left(function(d) {return d.x})
-//    .top(function(d) {return d.y})
-//	.lineWidth(0)
 
 // Add marks for the width of the cones
 middle.add(pv.Line)
@@ -233,12 +222,12 @@ middle.add(pv.Line)
 // Add the words at the center, left and right
 middle.add(pv.Label)
 	.data(function () {return [word];})
-	.left(2*column)
+	.left(3*column)
 	.top(sh/2 - 200)
 	.width(4*column)
 	.textBaseline("middle")
 	.textAlign("center")
-	.font("5em Helvetica, Arial, sans-serif")
+	.font("5em Gill Sans, Helvetica, Arial, sans-serif")
 
 /* The area with top line. */
 sliders.add(pv.Area)
