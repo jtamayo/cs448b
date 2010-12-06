@@ -254,17 +254,26 @@ midleft.add(pv.Panel)
 
 rightmost.add(pv.Label)
 	.data(function() {return m.outgoing})
-	.left(0)
+	.left(5)
 	.top(function(d) {return this.index*wordHeight })
 	.text(function(d) {return unstem(d.dest)})
 	.textBaseline("top")
 	.textAlign("left")
 	.font("1.4em Gill Sans, Helvetica, Arial, sans-serif")
-//	.event("mousedown", pv.Behavior.point)
-//	.event("point", function() { 
-//		var edge = m.outgoing[this.index];
-//		$("#iam").text(people[edge.people[0]].iam);
-//	})
+	
+rightmost.add(pv.Panel)
+	.data(function() {return m.outgoing})
+	.left(0)
+	.top(function(d) {return this.index*wordHeight })
+	.height(wordHeight)
+  .add(pv.Line)
+	.data(function() {return [0, m.outgoing[this.parent.index].count]})
+	.left(0)
+    .top(function(d) { return wordHeight - d })
+	.strokeStyle(params.outcolor[2])
+	.lineWidth(3)
+	.antialias(false);
+
 	
 midright.add(pv.Panel)
 	.data(function() { return m.outgoing })
@@ -273,11 +282,11 @@ midright.add(pv.Panel)
 		var ret = [
 			{x: 0*column, y: sh/2 - 200 + (-Math.floor(m.outgoingSum/2) + m.outgoingRunSum[this.parent.index])},
 			{x: 0.5*column, y: sh/2 - 200 + (-Math.floor(m.outgoingSum/2) + m.outgoingRunSum[this.parent.index])},
-			{x: 0.5*column, y: (this.parent.index + 0.5)*wordHeight},
-			{x: 1*column, y: (this.parent.index + 0.5)*wordHeight},
+			{x: 0.5*column, y: (this.parent.index + 1)*wordHeight - d.count/2},
+			{x: 1*column, y: (this.parent.index + 1)*wordHeight - d.count/2},
 		]
 		return ret})
-	.strokeStyle("#DDD")
+	.strokeStyle(params.outcolor[0])
 	.lineWidth(function(_, d) {return d.count})
 	.interpolate("basis")
     .left(function(d) {return d.x})
@@ -375,13 +384,13 @@ sliders.events("all")
 vis.render();
 
     </script>
-  <!--div id="fulltext">
+  <div id="fulltext">
 	<h1>Person</h1>
 	<h2>I am</h2>
 	<div id="iam"></div>
 	<h2>I am looking for</h2>
 	<div id="iamlookingfor"></div>
-  </div-->
+  </div>
   
   </div>
   </div></body>
