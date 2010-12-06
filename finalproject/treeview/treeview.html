@@ -90,8 +90,8 @@ var params = {
 	wordHeight: 15,
 	h: 675,
 	column: 64,
-	incoming: [],
-	outgoing: [],
+	incolor: ["#DEEBF7","#9ECAE1","#3182BD"],
+	outcolor: ["#FEE0D2","#FC9272","#DE2D26"]
 }
 var m = {
 	word: "honest",
@@ -101,6 +101,7 @@ var m = {
 	incomingSum: 0,
 	outgoingRunSum: [],
 	outgoingSum: 0,
+	node: {},
 	
 	updateWord : function(word) {
 		this.word = word;
@@ -110,10 +111,12 @@ var m = {
 		this.incomingSum = this.incomingRunSum[this.incomingRunSum.length - 1];
 		this.outgoingRunSum = runsum(this.outgoing)
 		this.outgoingSum = this.outgoingRunSum[this.outgoingRunSum.length - 1]
+		this.node = nodes
 	}
 };
 
-m.updateWord("honest");
+var indexthing = 25;
+m.updateWord(nodes[indexthing].node);
 
 /*
  * What's the basic state of the visualization?
@@ -246,8 +249,8 @@ middle.add(pv.Line)
 			{x: 6*column, y: sh/2 - 200 + m.outgoingSum/2},]})
 	.left(function(d) {return d.x})
     .top(function(d) {return d.y})
-	.strokeStyle("#F00")
-	.lineWidth(4)
+	.strokeStyle(params.outcolor[2])
+	.lineWidth(3)
 	.antialias(false);
 
 middle.add(pv.Line)
@@ -256,8 +259,8 @@ middle.add(pv.Line)
 			{x: 0*column, y: sh/2 - 200 + m.incomingSum/2},]})
 	.left(function(d) {return d.x})
     .top(function(d) {return d.y})
-	.strokeStyle("#00F")
-	.lineWidth(4)
+	.strokeStyle(params.incolor[2])
+	.lineWidth(3)
 	.antialias(false);
 
 // Add the words at the center, left and right
@@ -273,23 +276,43 @@ middle.add(pv.Label)
 /* The area with top line. */
 sliders.add(pv.Area)
     .data(nodes)
-	.left(2*column)
+	.right(2*column)
     .top(function(d) {return y(this.index)})
     .width(function(d) {return inx(d.indegree)})
-    .fillStyle("rgb(121,173,210)")
+    .fillStyle(params.incolor[0])
+  .anchor("left").add(pv.Line)
+    .lineWidth(1)
+	.strokeStyle(params.incolor[2])
 
 sliders.add(pv.Area)
     .data(nodes)
-	.right(2*column)
+	.left(2*column)
     .top(function(d) {return y(this.index)})
     .width(function(d) {return outx(d.outdegree)})
-    .fillStyle("rgb(173,121,210)")
+    .fillStyle(params.outcolor[0])
     .event("point", function() { 
 		m.updateWord(nodes[this.index].node);
 		vis.render();
 	})
     .event("unpoint", function() { 
 	})
+  .anchor("right").add(pv.Line)
+    .lineWidth(1)
+	.strokeStyle(params.outcolor[2])
+
+sliders.add(pv.Line)
+	.data(function() {return [0, nodes[indexthing].indegree]})
+	.left(function(d) {return 2*column - inx(d)})
+	.top(function(d) {return y(indexthing)})
+	.strokeStyle(params.incolor[2])
+	.lineWidth(3)
+
+sliders.add(pv.Line)
+	.data(function() {return [0, nodes[indexthing].outdegree]})
+	.left(function(d) {return 2*column + outx(d)})
+	.top(function(d) {return y(indexthing)})
+	.strokeStyle(params.outcolor[2])
+	.lineWidth(3)
 
 sliders.events("all")
     .event("mousedown", pv.Behavior.point().collapse("x"))
