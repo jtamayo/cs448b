@@ -36,9 +36,6 @@
 
 #searchbox {
 	font-size: 1.1em;
-}
-
-#searchform {
 	position: absolute;
 	top: 10px;
 	left: 512px;
@@ -50,18 +47,20 @@
   <body><div id="center">
   	<div id="fig">
   	<div>
-  		<form id="searchform" onsubmit="function() {updateSearch()}">
+  		<form onsubmit="updateSearch();return false;">
 	  		<input type="text" id="searchbox" />
   		</form>
   			
 	</div>
     <script type="text/javascript">
     	
-		
-		function updateSearch() {
-		word = $("searchbox").text();
-		}
-
+    
+    function updateSearch(){
+        m.updateWord($("#searchbox").val());
+		vis.render();
+		$("#searchbox").val("");
+    }
+    
     $(function(){
         var autocompleteContent = []
         var i = 0;
@@ -86,37 +85,46 @@
  * - Tweak the alignment of the full text
  * - Tweak the side columns, start centered but don't grow beyond the top
  */
-		
-/*
- * There's five parts in the visualization:
- * - Rightmost panel for the origin
- * - Middle panel for the center word
- * - Right panel for the dest word
- * 
- * 
- * There's also two panels in the middle that contain the edges between the words.
- * 
- * I'll use 960 pixels width, 720 height???
- * That should be good enough for the iPad.
- * 
- */
-// Setup - some useful methods for arrays
-// Stolen from "Javascript, the good parts"
-Function.prototype.method = function (name, func) {
-    this.prototype[name] = func;
-    return this;
+
+var params = {
+	wordHeight: 15,
+	h: 675,
+	column: 64,
+	incoming: [],
+	outgoing: [],
+}
+var m = {
+	word: "honest",
+	incoming: [],
+	outgoing: [],
+	incomingRunSum: [],
+	incomingSum: 0,
+	outgoingRunSum: [],
+	outgoingSum: 0,
+	
+	updateWord : function(word) {
+		this.word = word;
+		this.incoming = funkysort(inedges[this.word]);
+		this.outgoing = funkysort(outedges[this.word]);
+		this.incomingRunSum = runsum(this.incoming);
+		this.incomingSum = this.incomingRunSum[this.incomingRunSum.length - 1];
+		this.outgoingRunSum = runsum(this.outgoing)
+		this.outgoingSum = this.outgoingRunSum[this.outgoingRunSum.length - 1]
+	}
 };
-Array.method('reduce', function (f, value) {
-    var i;
-    for (i = 0; i < this.length; i += 1) {
-        value = f(this[i], value);
-    }
-    return value;
-});
 
+m.updateWord("honest");
 
-var column = 64; // Width of a single column
-var word = "honest"
+/*
+ * What's the basic state of the visualization?
+ * - Word in the center
+ * - List of words in incoming/outgoing edges, sorted in descending order by count/alphabetically
+ * - Thickness of the edges, and the running sum for the position of the edges
+ * - Some selected edge to display in the main box
+ * - 
+ */
+
+var column = params.column; // Width of a single column
 var wordHeight = 15
 var sh = 675
 var runSum = []
@@ -128,8 +136,6 @@ var inx = pv.Scale.linear(0, pv.max(nodes, function(n) { return n.indegree})).ra
 var outx = pv.Scale.linear(0, pv.max(nodes, function(n) { return n.outdegree})).range(0, 2*column)
 var y = pv.Scale.linear(0, nodes.length).range(10, 640) 
 
-var incoming = inedges[word];
-var outgoing = outedges[word];
 
 var vis = new pv.Panel()
     .width(960)
@@ -181,9 +187,8 @@ var middle = vis.add(pv.Panel)
 	.lineWidth(panelBorder)
 	
 // Add the words to the left panel. Sort them by prevalence, 
-var funkyincoming = funkysort(incoming)
 leftmost.add(pv.Label)
-	.data(function() {return funkyincoming})
+	.data(function() {return m.incoming})
 	.right(0)
 	.top(function(d) {return (this.index)*wordHeight })
 	.text(function(d) {return d.src})
@@ -191,17 +196,15 @@ leftmost.add(pv.Label)
 	.textAlign("right")
 	.font("1.4em Gill Sans, Helvetica, Arial, sans-serif")
 
-var incomingRunSum = runsum(funkyincoming)
-var incomingSum = incomingRunSum[incomingRunSum.length - 1]
 midleft.add(pv.Panel)
-	.data(function() { return funkyincoming;})
+	.data(function() { return m.incoming;})
   .add(pv.Line)
   	.data(function(d) { 
 		var ret = [
 			{x: 0*column, y: (this.parent.index + 0.5)*wordHeight},
 			{x: 0.5*column, y: (this.parent.index + 0.5)*wordHeight},
-			{x: 0.5*column, y: sh/2 - 200 + (-Math.floor(incomingSum/2) + incomingRunSum[this.parent.index])},
-			{x: 1*column, y: sh/2 - 200+ (-Math.floor(incomingSum/2) + incomingRunSum[this.parent.index])},
+			{x: 0.5*column, y: sh/2 - 200 + (-Math.floor(m.incomingSum/2) + m.incomingRunSum[this.parent.index])},
+			{x: 1*column, y: sh/2 - 200+ (-Math.floor(m.incomingSum/2) + m.incomingRunSum[this.parent.index])},
 		]
 		return ret})
 	.strokeStyle("#DDD")
@@ -210,9 +213,8 @@ midleft.add(pv.Panel)
     .left(function(d) {return d.x})
     .top(function(d) {return d.y})
 
-funkyoutgoing = funkysort(outgoing)
 rightmost.add(pv.Label)
-	.data(function() {return funkyoutgoing})
+	.data(function() {return m.outgoing})
 	.left(0)
 	.top(function(d) {return this.index*wordHeight })
 	.text(function(d) {return d.dest})
@@ -220,15 +222,13 @@ rightmost.add(pv.Label)
 	.textAlign("left")
 	.font("1.4em Gill Sans, Helvetica, Arial, sans-serif")
 	
-var outgoingRunSum = runsum(funkyoutgoing)
-var outgoingSum = outgoingRunSum[outgoingRunSum.length - 1]
 midright.add(pv.Panel)
-	.data(function() { return funkyoutgoing })
+	.data(function() { return m.outgoing })
   .add(pv.Line)
   	.data(function(d) { 
 		var ret = [
-			{x: 0*column, y: sh/2 - 200 + (-Math.floor(outgoingSum/2) + outgoingRunSum[this.parent.index])},
-			{x: 0.5*column, y: sh/2 - 200 + (-Math.floor(outgoingSum/2) + outgoingRunSum[this.parent.index])},
+			{x: 0*column, y: sh/2 - 200 + (-Math.floor(m.outgoingSum/2) + m.outgoingRunSum[this.parent.index])},
+			{x: 0.5*column, y: sh/2 - 200 + (-Math.floor(m.outgoingSum/2) + m.outgoingRunSum[this.parent.index])},
 			{x: 0.5*column, y: (this.parent.index + 0.5)*wordHeight},
 			{x: 1*column, y: (this.parent.index + 0.5)*wordHeight},
 		]
@@ -242,8 +242,8 @@ midright.add(pv.Panel)
 // Add marks for the width of the cones
 middle.add(pv.Line)
 	.data(function() { return [
-			{x: 6*column, y: sh/2 - 200 - outgoingSum/2},
-			{x: 6*column, y: sh/2 - 200 + outgoingSum/2},]})
+			{x: 6*column, y: sh/2 - 200 - m.outgoingSum/2},
+			{x: 6*column, y: sh/2 - 200 + m.outgoingSum/2},]})
 	.left(function(d) {return d.x})
     .top(function(d) {return d.y})
 	.strokeStyle("#F00")
@@ -252,8 +252,8 @@ middle.add(pv.Line)
 
 middle.add(pv.Line)
 	.data(function() { return [
-			{x: 0*column, y: sh/2 - 200 - incomingSum/2},
-			{x: 0*column, y: sh/2 - 200 + incomingSum/2},]})
+			{x: 0*column, y: sh/2 - 200 - m.incomingSum/2},
+			{x: 0*column, y: sh/2 - 200 + m.incomingSum/2},]})
 	.left(function(d) {return d.x})
     .top(function(d) {return d.y})
 	.strokeStyle("#00F")
@@ -262,7 +262,7 @@ middle.add(pv.Line)
 
 // Add the words at the center, left and right
 middle.add(pv.Label)
-	.data(function () {return [word];})
+	.data(function () {return [m.word];})
 	.left(3*column)
 	.top(sh/2 - 200)
 	.width(4*column)
@@ -285,17 +285,7 @@ sliders.add(pv.Area)
     .width(function(d) {return outx(d.outdegree)})
     .fillStyle("rgb(173,121,210)")
     .event("point", function() { 
-		word = nodes[this.index].node
-		incoming = inedges[word];
-		funkyincoming = funkysort(incoming);
-		incomingRunSum = runsum(funkyincoming)
-		incomingSum = incomingRunSum[incomingRunSum.length - 1]
-		
-		outgoing = outedges[word];
-		funkyoutgoing = funkysort(outgoing);
-		outgoingRunSum = runsum(funkyoutgoing)
-		outgoingSum = outgoingRunSum[outgoingRunSum.length - 1]
-		
+		m.updateWord(nodes[this.index].node);
 		vis.render();
 	})
     .event("unpoint", function() { 
