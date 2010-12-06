@@ -13,11 +13,13 @@ enum State {
 
 public class NetworkFilter {
     public static void main(String[] args) throws IOException {
-        if (args.length != 1) {
-            System.err.println("Use: MatrixViewSorter file");
+        if (args.length != 2) {
+            System.err.println("Use: MatrixViewSorter file maxNodes");
             System.exit(-1);
         }
 
+        final int maxNodes = Integer.parseInt(args[1]);
+        
         Graph g = NetworkReader.read(args[0]);
         final Map<String, Integer> degree = new HashMap<String, Integer>();
 
@@ -45,7 +47,7 @@ public class NetworkFilter {
         
 
         System.out.println("%%nodes%%");
-        final List<String> subList = sortedNodes.subList(0, 100);
+        final List<String> subList = sortedNodes.subList(0, maxNodes);
         for (String node : subList) {
             System.out.println(node);
         }

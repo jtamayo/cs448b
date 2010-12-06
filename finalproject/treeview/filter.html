@@ -1,0 +1,91 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <title>Tree view</title>
+    <link type="text/css" rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.6.custom.css"/>
+    <script type="text/javascript" src="../protovis-d3.2.js"></script>
+    <script type="text/javascript" src="treeview.js"></script>
+    <script type="text/javascript" src="../allnodes.js"></script>
+    <script type="text/javascript" src="../jquery-1.4.2.min.js"></script>
+    <script type="text/javascript" src="../jquery-ui-1.8.6.custom.min.js"></script>
+	
+    <style type="text/css">
+
+#fig {
+  width: 1024px;
+  height: 675px;
+  margin-left: auto;
+  margin-right: auto;
+  position: relative;
+  top: 0px;
+  left: 0px;
+}
+
+#fulltext {
+	font: 1em Gill Sans, Helvetica, Arial, sans-serif;
+	position: absolute;
+	top: 300px;
+	left: 512px;
+	width: 256px;
+/*	height: 100px;
+	overflow: auto;*/
+	text-align: justify;
+	margin: 0;
+	padding: 0;
+}
+
+#searchbox {
+	font-size: 1.1em;
+	position: absolute;
+	top: 10px;
+	left: 512px;
+	width: 256px;
+}
+
+    </style>
+  </head>
+  <body>
+  	<div>
+  	nodes = <span id="nodes"></span>;<br/><br/>
+	inedges = <span id="inedges"></span>;<br/><br/>
+	outedges = <span id="outedges"></span>;<br/><br/>
+	people = <span id="people"></span>;<br/><br/>
+	stems = <span id="stems"></span>;<br/><br/>
+  	<script type="text/javascript">
+var maxNodes = 10;
+
+nodes.forEach(function(a) {a.count = a.indegree + a.outdegree});
+nodes.sort(function(a,b) {return b.count - a.count});// reverse sort
+nodes = nodes.slice(0, maxNodes);
+names = {}
+nodes.forEach(function(a) { names[a.node] = 1 })
+
+newInedges = {}
+nodes.forEach(function(a) {
+	newInedges[a.node] = inedges[a.node].filter(function(edge) {return names[edge.src] === 1 && names[edge.dest] === 1})
+})
+inedges = newInedges;
+
+newOutedges = {}
+nodes.forEach(function(a) {
+	newOutedges[a.node] = outedges[a.node].filter(function(edge) {return names[edge.src] === 1 && names[edge.dest] === 1})
+})
+outedges = newOutedges;
+
+nodes.forEach(function(a) {
+a.indegree = inedges[a.node].reduce(function(previousValue, currentEdge) {return previousValue + currentEdge.count}, 0);
+a.outdegree = outedges[a.node].reduce(function(previousValue, currentEdge) {return previousValue + currentEdge.count}, 0);
+a.count = a.indegree + a.outdegree;
+})
+
+$("#nodes").text(JSON.stringify(nodes));
+$("#inedges").text(JSON.stringify(inedges));
+$("#outedges").text(JSON.stringify(outedges));
+$("#people").text(JSON.stringify(people));
+$("#stems").text(JSON.stringify(stems));
+
+    </script>
+	
+  	</div>
+  </body>
+</html>

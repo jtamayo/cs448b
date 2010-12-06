@@ -2,16 +2,23 @@
 <html>
   <head>
     <title>Tree view</title>
-    <link type="text/css" rel="stylesheet" href="ex.css?3.2"/>
+    <link type="text/css" rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.6.custom.css"/>
     <script type="text/javascript" src="../protovis-d3.2.js"></script>
     <script type="text/javascript" src="treeview.js"></script>
     <script type="text/javascript" src="../100nodes.js"></script>
+    <script type="text/javascript" src="../jquery-1.4.2.min.js"></script>
+    <script type="text/javascript" src="../jquery-ui-1.8.6.custom.min.js"></script>
 	
     <style type="text/css">
 
 #fig {
   width: 1024px;
   height: 675px;
+  margin-left: auto;
+  margin-right: auto;
+  position: relative;
+  top: 0px;
+  left: 0px;
 }
 
 #fulltext {
@@ -20,17 +27,50 @@
 	top: 300px;
 	left: 512px;
 	width: 256px;
-	height: 100px;
-	overflow: auto;
+/*	height: 100px;
+	overflow: auto;*/
 	text-align: justify;
 	margin: 0;
 	padding: 0;
 }
 
+#searchbox {
+	font-size: 1.1em;
+	position: absolute;
+	top: 10px;
+	left: 512px;
+	width: 256px;
+}
+
     </style>
   </head>
-  <body><div id="center"><div id="fig">
+  <body><div id="center">
+  	<div id="fig">
+  	<div>
+  		<form onsubmit="updateSearch();return false;">
+	  		<input type="text" id="searchbox" />
+  		</form>
+  			
+	</div>
     <script type="text/javascript">
+    	
+    
+    function updateSearch(){
+        m.updateWord($("#searchbox").val());
+		vis.render();
+		$("#searchbox").val("");
+    }
+    
+    $(function(){
+        var autocompleteContent = []
+        var i = 0;
+        for (i = 0; i < nodes.length; i++) {
+            autocompleteContent.push(nodes[i].node)
+        }
+        $("#searchbox").autocomplete({
+            source: autocompleteContent
+        });
+    });
 /*
  * TODO: 
  * - Tweak the alignment of the center word so the word is in the center of the cones
@@ -44,39 +84,85 @@
  * - fix font size of middle word
  * - Tweak the alignment of the full text
  * - Tweak the side columns, start centered but don't grow beyond the top
+ * - Animate the input bar if the search term does not exist
  */
-		
-/*
- * There's five parts in the visualization:
- * - Rightmost panel for the origin
- * - Middle panel for the center word
- * - Right panel for the dest word
- * 
- * 
- * There's also two panels in the middle that contain the edges between the words.
- * 
- * I'll use 960 pixels width, 720 height???
- * That should be good enough for the iPad.
- * 
- */
-// Setup - some useful methods for arrays
-// Stolen from "Javascript, the good parts"
-Function.prototype.method = function (name, func) {
-    this.prototype[name] = func;
-    return this;
+
+var params = {
+	wordHeight: 15,
+	h: 675,
+	column: 64,
+	incolor: ["#DEEBF7","#9ECAE1","#3182BD"],
+	outcolor: ["#FEE0D2","#FC9272","#DE2D26"],
+}
+var m = {
+	word: "honest",
+	incoming: [],
+	outgoing: [],
+	incomingRunSum: [],
+	incomingSum: 0,
+	outgoingRunSum: [],
+	outgoingSum: 0,
+	index: 0,
+	
+	updateWord : function(word) {
+		var i = 0;
+		for (i = 0; i < nodes.length; i++) {
+			if (nodes[i].node === word) break;
+		}
+		if (i === nodes.length) {
+			// It's not a valid word, discard it
+			return;
+		}
+		this.index = i;
+		this.word = word;
+		this.incoming = funkysort(inedges[this.word]);
+		this.outgoing = funkysort(outedges[this.word]);
+		this.incomingRunSum = runsum(this.incoming);
+		this.incomingSum = this.incomingRunSum[this.incomingRunSum.length - 1];
+		this.outgoingRunSum = runsum(this.outgoing);
+		this.outgoingSum = this.outgoingRunSum[this.outgoingRunSum.length - 1];
+	}
 };
-Array.method('reduce', function (f, value) {
-    var i;
-    for (i = 0; i < this.length; i += 1) {
-        value = f(this[i], value);
-    }
-    return value;
-});
 
+m.updateWord("honest");
 
-var font = "Gill Sans, Helvetica, Arial, sans-serif"
-var column = 64; // Width of a single column
-var word = "honest"
+var sorters = {
+	byindegree: function(a,b) {
+		if (a.indegree === b.indegree) {
+			return (a.node < b.node) ? -1 : 1;
+		} else {
+			return a.indegree - b.indegree;
+		}
+	},
+	byoutdegree: function(a,b) {
+		if (a.outdegree === b.outdegree) {
+			return (a.node < b.node) ? -1 : 1;
+		} else {
+			return a.outdegree - b.outdegree;
+		}
+	},
+	byassymetry: function(a,b) {
+		var assymetry = (a.indegree - a.outdegree) - (b.indegree - b.outdegree);
+		if (assymetry === 0) {
+			return (a.node < b.node) ? -1 : 1;
+		} else {
+			return assymetry;
+		}
+	}
+}
+
+nodes.sort(sorters.byassymetry);
+
+/*
+ * What's the basic state of the visualization?
+ * - Word in the center
+ * - List of words in incoming/outgoing edges, sorted in descending order by count/alphabetically
+ * - Thickness of the edges, and the running sum for the position of the edges
+ * - Some selected edge to display in the main box
+ * - 
+ */
+
+var column = params.column; // Width of a single column
 var wordHeight = 15
 var sh = 675
 var runSum = []
@@ -88,8 +174,6 @@ var inx = pv.Scale.linear(0, pv.max(nodes, function(n) { return n.indegree})).ra
 var outx = pv.Scale.linear(0, pv.max(nodes, function(n) { return n.outdegree})).range(0, 2*column)
 var y = pv.Scale.linear(0, nodes.length).range(10, 640) 
 
-var incoming = inedges[word];
-var outgoing = outedges[word];
 
 var vis = new pv.Panel()
     .width(960)
@@ -141,9 +225,8 @@ var middle = vis.add(pv.Panel)
 	.lineWidth(panelBorder)
 	
 // Add the words to the left panel. Sort them by prevalence, 
-var funkyincoming = funkysort(incoming)
 leftmost.add(pv.Label)
-	.data(function() {return funkyincoming})
+	.data(function() {return m.incoming})
 	.right(0)
 	.top(function(d) {return (this.index)*wordHeight })
 	.text(function(d) {return d.src})
@@ -151,17 +234,15 @@ leftmost.add(pv.Label)
 	.textAlign("right")
 	.font("1.4em Gill Sans, Helvetica, Arial, sans-serif")
 
-var incomingRunSum = runsum(funkyincoming)
-var incomingSum = incomingRunSum[incomingRunSum.length - 1]
 midleft.add(pv.Panel)
-	.data(function() { return funkyincoming;})
+	.data(function() { return m.incoming;})
   .add(pv.Line)
   	.data(function(d) { 
 		var ret = [
 			{x: 0*column, y: (this.parent.index + 0.5)*wordHeight},
 			{x: 0.5*column, y: (this.parent.index + 0.5)*wordHeight},
-			{x: 0.5*column, y: sh/2 - 200 + (-Math.floor(incomingSum/2) + incomingRunSum[this.parent.index])},
-			{x: 1*column, y: sh/2 - 200+ (-Math.floor(incomingSum/2) + incomingRunSum[this.parent.index])},
+			{x: 0.5*column, y: sh/2 - 200 + (-Math.floor(m.incomingSum/2) + m.incomingRunSum[this.parent.index])},
+			{x: 1*column, y: sh/2 - 200+ (-Math.floor(m.incomingSum/2) + m.incomingRunSum[this.parent.index])},
 		]
 		return ret})
 	.strokeStyle("#DDD")
@@ -170,9 +251,8 @@ midleft.add(pv.Panel)
     .left(function(d) {return d.x})
     .top(function(d) {return d.y})
 
-funkyoutgoing = funkysort(outgoing)
 rightmost.add(pv.Label)
-	.data(function() {return funkyoutgoing})
+	.data(function() {return m.outgoing})
 	.left(0)
 	.top(function(d) {return this.index*wordHeight })
 	.text(function(d) {return d.dest})
@@ -180,15 +260,13 @@ rightmost.add(pv.Label)
 	.textAlign("left")
 	.font("1.4em Gill Sans, Helvetica, Arial, sans-serif")
 	
-var outgoingRunSum = runsum(funkyoutgoing)
-var outgoingSum = outgoingRunSum[outgoingRunSum.length - 1]
 midright.add(pv.Panel)
-	.data(function() { return funkyoutgoing })
+	.data(function() { return m.outgoing })
   .add(pv.Line)
   	.data(function(d) { 
 		var ret = [
-			{x: 0*column, y: sh/2 - 200 + (-Math.floor(outgoingSum/2) + outgoingRunSum[this.parent.index])},
-			{x: 0.5*column, y: sh/2 - 200 + (-Math.floor(outgoingSum/2) + outgoingRunSum[this.parent.index])},
+			{x: 0*column, y: sh/2 - 200 + (-Math.floor(m.outgoingSum/2) + m.outgoingRunSum[this.parent.index])},
+			{x: 0.5*column, y: sh/2 - 200 + (-Math.floor(m.outgoingSum/2) + m.outgoingRunSum[this.parent.index])},
 			{x: 0.5*column, y: (this.parent.index + 0.5)*wordHeight},
 			{x: 1*column, y: (this.parent.index + 0.5)*wordHeight},
 		]
@@ -202,27 +280,27 @@ midright.add(pv.Panel)
 // Add marks for the width of the cones
 middle.add(pv.Line)
 	.data(function() { return [
-			{x: 6*column, y: sh/2 - 200 - outgoingSum/2},
-			{x: 6*column, y: sh/2 - 200 + outgoingSum/2},]})
+			{x: 6*column, y: sh/2 - 200 - m.outgoingSum/2},
+			{x: 6*column, y: sh/2 - 200 + m.outgoingSum/2},]})
 	.left(function(d) {return d.x})
     .top(function(d) {return d.y})
-	.strokeStyle("#F00")
-	.lineWidth(4)
+	.strokeStyle(params.outcolor[2])
+	.lineWidth(3)
 	.antialias(false);
 
 middle.add(pv.Line)
 	.data(function() { return [
-			{x: 0*column, y: sh/2 - 200 - incomingSum/2},
-			{x: 0*column, y: sh/2 - 200 + incomingSum/2},]})
+			{x: 0*column, y: sh/2 - 200 - m.incomingSum/2},
+			{x: 0*column, y: sh/2 - 200 + m.incomingSum/2},]})
 	.left(function(d) {return d.x})
     .top(function(d) {return d.y})
-	.strokeStyle("#00F")
-	.lineWidth(4)
+	.strokeStyle(params.incolor[2])
+	.lineWidth(3)
 	.antialias(false);
 
 // Add the words at the center, left and right
 middle.add(pv.Label)
-	.data(function () {return [word];})
+	.data(function () {return [m.word];})
 	.left(3*column)
 	.top(sh/2 - 200)
 	.width(4*column)
@@ -230,42 +308,61 @@ middle.add(pv.Label)
 	.textAlign("center")
 	.font("5em Gill Sans, Helvetica, Arial, sans-serif")
 
-/* The area with top line. */
-sliders.add(pv.Area)
-    .data(nodes)
-	.left(2*column)
-    .top(function(d) {return y(this.index)})
-    .width(function(d) {return inx(d.indegree)})
-    .fillStyle("rgb(121,173,210)")
 
+
+/* The area with top line. */
 sliders.add(pv.Area)
     .data(nodes)
 	.right(2*column)
     .top(function(d) {return y(this.index)})
+    .width(function(d) {return inx(d.indegree)})
+    .fillStyle(params.incolor[0])
+//	.segmented(true)
+//	.fillStyle(function(d) {return this.index === m.index ? params.incolor[2] : params.incolor[0]})
+  .anchor("left").add(pv.Line)
+    .lineWidth(1)
+	.strokeStyle(params.incolor[2])
+
+sliders.add(pv.Area)
+    .data(nodes)
+	.left(2*column)
+    .top(function(d) {return y(this.index)})
     .width(function(d) {return outx(d.outdegree)})
-    .fillStyle("rgb(173,121,210)")
+//	.segmented(true)
+//    .fillStyle(function(d) {return this.index === m.index ? params.outcolor[2] : params.outcolor[0]})
+    .fillStyle(params.outcolor[0])
+//	.events("all")
+//    .event("mousedown", pv.Behavior.point().collapse("x"))
     .event("point", function() { 
-		word = nodes[this.index].node
-		incoming = inedges[word];
-		funkyincoming = funkysort(incoming);
-		incomingRunSum = runsum(funkyincoming)
-		incomingSum = incomingRunSum[incomingRunSum.length - 1]
-		
-		outgoing = outedges[word];
-		funkyoutgoing = funkysort(outgoing);
-		outgoingRunSum = runsum(funkyoutgoing)
-		outgoingSum = outgoingRunSum[outgoingRunSum.length - 1]
-		
+		m.updateWord(nodes[this.index].node);
 		vis.render();
 	})
     .event("unpoint", function() { 
 	})
+  .anchor("right").add(pv.Line)
+    .lineWidth(1)
+	.strokeStyle(params.outcolor[2])
+
+sliders.add(pv.Line)
+	.data(function() {return [0, nodes[m.index].indegree]})
+	.left(function(d) {return 2*column - inx(d)})
+	.top(function(d) {return y(m.index)})
+	.strokeStyle(params.incolor[2])
+	.lineWidth(2)
+	.antialias(false)
+
+sliders.add(pv.Line)
+	.data(function() {return [0, nodes[m.index].outdegree]})
+	.left(function(d) {return 2*column + outx(d)})
+	.top(function(d) {return y(m.index)})
+	.strokeStyle(params.outcolor[2])
+	.lineWidth(2)
+	.antialias(false)
 
 sliders.events("all")
     .event("mousedown", pv.Behavior.point().collapse("x"))
 //    .event("mouseover", pv.Behavior.point().collapse("x"));
 
-nodes.sort(function(a, b) {return (a.indegree - a.outdegree) - (b.indegree - b.outdegree)})
 
 
 vis.render();
