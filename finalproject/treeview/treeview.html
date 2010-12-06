@@ -189,14 +189,6 @@ var sliders = vis.add(pv.Panel)
 	.strokeStyle("#888")
 	.lineWidth(panelBorder)
 
-// Setup the layout
-var leftmost = vis.add(pv.Panel)
-	.width(2*column)
-	.top(0)
-	.left(4*column)
-	.strokeStyle("#888")
-	.lineWidth(panelBorder)
-
 var midleft = vis.add(pv.Panel)
 	.width(1*column)
 	.top(0)
@@ -208,6 +200,14 @@ var midright = vis.add(pv.Panel)
 	.width(1*column)
 	.top(0)
 	.left(13*column)
+	.strokeStyle("#888")
+	.lineWidth(panelBorder)
+
+// Setup the layout
+var leftmost = vis.add(pv.Panel)
+	.width(2*column)
+	.top(0)
+	.left(4*column)
 	.strokeStyle("#888")
 	.lineWidth(panelBorder)
 
@@ -228,30 +228,44 @@ var middle = vis.add(pv.Panel)
 // Add the words to the left panel. Sort them by prevalence, 
 leftmost.add(pv.Label)
 	.data(function() {return m.incoming})
-	.right(0)
+	.right(5)
 	.top(function(d) {return (this.index)*wordHeight })
 	.text(function(d) {return unstem(d.src)})
 	.textBaseline("top")
 	.textAlign("right")
 	.font("1.4em Gill Sans, Helvetica, Arial, sans-serif")
+	
+leftmost.add(pv.Panel)
+	.data(function() {return m.incoming})
+	.right(0)
+	.top(function(d) {return this.index*wordHeight })
+	.height(wordHeight)
+  .add(pv.Line)
+	.data(function() {return [0, m.incoming[this.parent.index].count]})
+	.right(0)
+    .top(function(d) { return wordHeight - d })
+	.strokeStyle(params.incolor[2])
+	.lineWidth(3)
+	.antialias(false);
 
 midleft.add(pv.Panel)
 	.data(function() { return m.incoming;})
   .add(pv.Line)
   	.data(function(d) { 
-		var ret = [
-			{x: 0*column, y: (this.parent.index + 0.5)*wordHeight},
-			{x: 0.5*column, y: (this.parent.index + 0.5)*wordHeight},
-			{x: 0.5*column, y: sh/2 - 200 + (-Math.floor(m.incomingSum/2) + m.incomingRunSum[this.parent.index])},
-			{x: 1*column, y: sh/2 - 200+ (-Math.floor(m.incomingSum/2) + m.incomingRunSum[this.parent.index])},
+			var ret = [
+			{x: 0*column, y: (this.parent.index + 1)*wordHeight - d.count/2},
+			{x: 0.5*column, y: (this.parent.index + 1)*wordHeight - d.count/2},
+			{x: 0.5*column, y: sh/2 - 200 + (-m.incomingSum/2 + m.incomingRunSum[this.parent.index]) - d.count/2},
+			{x: 1*column, y: sh/2 - 200+ (-m.incomingSum/2 + m.incomingRunSum[this.parent.index]) - d.count/2},
 		]
 		return ret})
 	.strokeStyle("#DDD")
+	.strokeStyle(params.incolor[0])
 	.lineWidth(function(_, d) {return d.count})
 	.interpolate("basis")
     .left(function(d) {return d.x})
-    .top(function(d) {return d.y})
-
+    .top(function(d) {return d.y});
+	
 rightmost.add(pv.Label)
 	.data(function() {return m.outgoing})
 	.left(5)
@@ -280,8 +294,8 @@ midright.add(pv.Panel)
   .add(pv.Line)
   	.data(function(d) { 
 		var ret = [
-			{x: 0*column, y: sh/2 - 200 + (-Math.floor(m.outgoingSum/2) + m.outgoingRunSum[this.parent.index])},
-			{x: 0.5*column, y: sh/2 - 200 + (-Math.floor(m.outgoingSum/2) + m.outgoingRunSum[this.parent.index])},
+			{x: 0*column, y: sh/2 - 200 + (-m.outgoingSum/2 + m.outgoingRunSum[this.parent.index]) - d.count/2},
+			{x: 0.5*column, y: sh/2 - 200 + (-m.outgoingSum/2 + m.outgoingRunSum[this.parent.index]) - d.count/2},
 			{x: 0.5*column, y: (this.parent.index + 1)*wordHeight - d.count/2},
 			{x: 1*column, y: (this.parent.index + 1)*wordHeight - d.count/2},
 		]
@@ -323,8 +337,6 @@ middle.add(pv.Label)
 	.textBaseline("middle")
 	.textAlign("center")
 	.font("5em Gill Sans, Helvetica, Arial, sans-serif")
-
-
 
 /* The area with top line. */
 sliders.add(pv.Area)
