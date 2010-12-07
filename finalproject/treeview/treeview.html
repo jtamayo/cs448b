@@ -23,7 +23,7 @@
 
 #fulltext {
 	position: absolute;
-	top: 230px;
+	top: 200px;
 	left: 512px;
 	width: 270px;
 	text-align: left;
@@ -64,6 +64,12 @@
 	left: 512px;
 	width: 256px;
 }
+
+#buttons {
+	text-align: right;
+	font-size: 0.5em;
+	margin-bottom: 1em;
+}
     </style>
   </head>
   <body><div id="center">
@@ -93,24 +99,35 @@
             source: autocompleteContent
         });
     });
+	$(function() {
+		$("#next").button();
+		$("#next").click(function() {
+			m.nextPerson()
+		});
+		$("#previous").button();
+		$("#previous").click(function() {
+			m.previousPerson();
+		});
+	});
 /*
  * TODO:
  * - add orientation 
- * - Tweak the alignment of the center word so the word is in the center of the cones
  * - Add "..." to show words that can't fit on the screen
  * - Remove "i" and "the"
- * - Unstem
  * - "sex"
  * - scales, move ticks so they start at the same place 
  * - Bigrams
- * - Implement sliding for left bar
  * - change font and background
- * - fix font size of middle word
- * - Tweak the alignment of the full text
  * - Tweak the side columns, start centered but don't grow beyond the top
  * - Animate the input bar if the search term does not exist
  * - second has an error!
  * - in text, replace .word with , space word
+ * DONE:
+ * - Tweak the alignment of the full text
+ * - fix font size of middle word
+ * - Implement sliding for left bar
+ * - Tweak the alignment of the center word so the word is in the center of the cones
+ * - Unstem
  */
 
 var params = {
@@ -147,17 +164,41 @@ var m = {
 		this.incoming = funkysort(inedges[this.word]);
 		this.outgoing = funkysort(outedges[this.word]);
 		this.incomingRunSum = runsum(this.incoming);
-		this.incomingSum = this.incomingRunSum[this.incomingRunSum.length - 1];
+		this.incomingSum = this.incomingRunSum.length == 0 ? 0 : this.incomingRunSum[this.incomingRunSum.length - 1];
 		this.outgoingRunSum = runsum(this.outgoing);
-		this.outgoingSum = this.outgoingRunSum[this.outgoingRunSum.length - 1];
+		this.outgoingSum = this.outgoingRunSum.length == 0 ? 0 :this.outgoingRunSum[this.outgoingRunSum.length - 1];
+		
+		this.updatePeople([]);
 	},
 	
 	updatePeople : function(newPeople) {
 		this.people = newPeople;
 		if (this.people.length && this.people.length > 0) {
 			this.person = 0;
+			displayPerson(this.people[this.person]);
+		} else {
+			displayPerson(0);
 		}
-		displayPerson(this.people[this.person]);
+	},
+	
+	nextPerson : function() {
+		if (this.people.length > 0) {
+			this.person++;
+			if (this.person === this.people.length) {
+				this.person = 0;
+			}
+			displayPerson(this.people[this.person]);
+		}
+	},
+	
+	previousPerson : function() {
+		if (this.people.length > 0) {
+			this.person--;
+			if (this.person === -1) {
+				this.person = this.people.length - 1;
+			}
+			displayPerson(this.people[this.person]);
+		}
 	}
 	
 };
@@ -191,15 +232,6 @@ var sorters = {
 }
 
 nodes.sort(sorters.byassymetry);
-
-/*
- * What's the basic state of the visualization?
- * - Word in the center
- * - List of words in incoming/outgoing edges, sorted in descending order by count/alphabetically
- * - Thickness of the edges, and the running sum for the position of the edges
- * - Some selected edge to display in the main box
- * - 
- */
 
 var column = params.column; // Width of a single column
 var wordHeight = 15
@@ -422,6 +454,11 @@ sliders.add(pv.Area)
     .top(function(d) {return y(this.index)})
     .width(function(d) {return inx(d.indegree)})
     .fillStyle(params.incolor[0])
+	.event("point", function() { 
+		m.updateWord(nodes[this.index].node);
+		vis.render();
+	})
+	.event("unpoint", function(){})
   .anchor("left").add(pv.Line)
     .lineWidth(1)
 	.strokeStyle(params.incolor[2])
@@ -448,6 +485,7 @@ sliders.add(pv.Area)
 		m.updateWord(nodes[this.index].node);
 		vis.render();
 	})
+	.event("unpoint", function(){})
   .anchor("right").add(pv.Line)
     .lineWidth(1)
 	.strokeStyle(params.outcolor[2])
@@ -479,33 +517,41 @@ sliders.add(pv.Line)
 	
 
 sliders.events("all")
-    .event("mousedown", pv.Behavior.point().collapse("x"))
+    .event("mousedown", pv.Behavior.point("Infinity").collapse("x"))
 //    .event("mouseover", pv.Behavior.point().collapse("x"));
 
 function displayPerson(personid){
-	var age = people[personid].age;
-	var gender = people[personid].gender;
-	var description;
-	if (gender === 0) {
-		if (age === 0) {
-			description = "Female, " + people[personid].location ; 
+	if (personid !== 0) {
+		var age = people[personid].age;
+		var gender = people[personid].gender;
+		var description;
+		if (gender === 0) {
+			if (age === 0) {
+				description = "Female, " + people[personid].location ; 
+			}
+			else {
+				description = age + " year old female, " + people[personid].location;
+			}
+		}
+		else{
+			if (age === 0) {
+			description = "Male, " + people[personid].location ; 
 		}
 		else {
-			description = age + " year old female, " + people[personid].location;
+			description = age + " year old male, " + people[personid].location;
 		}
+		}
+		$("#title").text(people[personid].title);
+		$("#iam").text(people[personid].iam);
+		$("#iamlookingfor").text(people[personid].looking);
+		$("#age_gender_location_orientation").text(description);
+		$("#personCount").text((m.person + 1) + " of " + m.people.length);
+	} else {
+		$("#title").text("");
+		$("#iam").text("");
+		$("#iamlookingfor").text("");
+		$("#age_gender_location_orientation").text("");	
 	}
-	else{
-		if (age === 0) {
-		description = "Male, " + people[personid].location ; 
-	}
-	else {
-		description = age + " year old male, " + people[personid].location;
-	}
-	}
-	$("#title").text(people[personid].title);
-	$("#iam").text(people[personid].iam);
-	$("#iamlookingfor").text(people[personid].looking);
-	$("#age_gender_location_orientation").text(description);	
 
 }
 
@@ -513,6 +559,11 @@ vis.render();
 
     </script>
   <div id="fulltext">
+  	<div id="buttons">
+  		<span id="personCount" style="padding-right: 0.5em"></span>
+  		<button id="previous">&lt;</button>
+	  	<button id="next">&gt;</button>
+  	</div>
 	<div id="title"></div>
 	<div id="iam"></div>
 	<div id="iamlookingfor"></div>
