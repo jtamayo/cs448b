@@ -5,7 +5,8 @@
     <link type="text/css" rel="stylesheet" href="../css/smoothness/jquery-ui-1.8.6.custom.css"/>
     <script type="text/javascript" src="../protovis-d3.2.js"></script>
     <script type="text/javascript" src="treeview.js"></script>
-    <script type="text/javascript" src="../allnodes.js"></script>
+    <script type="text/javascript" src="../nounsandadj.js"></script>
+    <!--script type="text/javascript" src="../allnodes.js"></script-->
     <script type="text/javascript" src="../jquery-1.4.2.min.js"></script>
     <script type="text/javascript" src="../jquery-ui-1.8.6.custom.min.js"></script>
 	
@@ -239,7 +240,7 @@ var sh = 675
 var runSum = []
 var i;
 var sum = 0;
-var panelBorder = 1;
+var panelBorder = 0;
 
 var inx = pv.Scale.linear(0, pv.max(nodes, function(n) { return n.indegree})).range(0, 2*column)
 var outx = pv.Scale.linear(0 , pv.max(nodes, function(n) { return n.outdegree})).range(0, 2*column)
@@ -545,12 +546,13 @@ function displayPerson(personid){
 		$("#iam").text(people[personid].iam);
 		$("#iamlookingfor").text(people[personid].looking);
 		$("#age_gender_location_orientation").text(description);
-		$("#personCount").text((m.person + 1) + " of " + m.people.length);
+		$("#personCount").text((m.person + 1) + " of " + m.people.length).visible(true);
 	} else {
 		$("#title").text("");
 		$("#iam").text("");
 		$("#iamlookingfor").text("");
 		$("#age_gender_location_orientation").text("");	
+		$("#personCount").text("");
 	}
 
 }
