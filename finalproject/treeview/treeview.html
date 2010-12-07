@@ -12,26 +12,44 @@
     <style type="text/css">
 
 #fig {
-  width: 1024px;
-  height: 675px;
-  margin-left: auto;
-  margin-right: auto;
-  position: relative;
-  top: 0px;
-  left: 0px;
+	width: 1024px;
+	height: 675px;
+	margin-left: auto;
+	margin-right: auto;
+	position: relative;
+	top: 0px;
+	left: 0px;
 }
 
 #fulltext {
-	font: 1em Gill Sans, Helvetica, Arial, sans-serif;
 	position: absolute;
 	top: 300px;
 	left: 512px;
 	width: 256px;
 /*	height: 100px;
 	overflow: auto;*/
-	text-align: justify;
+	text-align: left;
 	margin: 0;
 	padding: 0;
+}
+
+#title {
+	font: 1em Gill Sans, Helvetica, Arial, sans-serif;
+	font-weight:bold;
+	color:#525252;
+	}
+#iamlookingfor{
+	font: 1em Gill Sans, Helvetica, Arial, sans-serif;
+	color:#525252;
+	}
+#iam {
+	font: 1em Gill Sans, Helvetica, Arial, sans-serif;
+	color:#525252;
+	}
+#age_gender_location_orientation {
+	font: 0.85em Gill Sans;
+	font-style:italic;
+	color:#525252;
 }
 
 #searchbox {
@@ -413,19 +431,25 @@ sliders.events("all")
     .event("mousedown", pv.Behavior.point().collapse("x"))
 //    .event("mouseover", pv.Behavior.point().collapse("x"));
 
+function displayPerson(){
+		
+}
 
+$(function() {
+	$("#title").text(people[912753321].title);
+	$("#iam").text(people[912753321].iam);
+	$("#iamlookingfor").text(people[912753321].looking);
+	$("#age_gender_location_orientation").text(people[912753321].age);	
+});
 
 vis.render();
 
     </script>
   <div id="fulltext">
-	<h1>Person</h1>
-	<h2>I am</h2>
+	<div id="title"></div>
 	<div id="iam"></div>
-	<h2>I am looking for</h2>
 	<div id="iamlookingfor"></div>
-  </div>
-  
-  </div>
+	<div id="age_gender_location_orientation"></div>
   </div></body>
+  
 </html>
