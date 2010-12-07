@@ -117,7 +117,6 @@ var params = {
 	wordHeight: 15,
 	h: 675,
 	column: 64,
-	width: 64*16,
 	incolor: ["#DEEBF7","#9ECAE1","#3182BD"],
 	outcolor: ["#FEE0D2","#FC9272","#DE2D26"],
 }
@@ -207,7 +206,7 @@ var sh = 675
 var runSum = []
 var i;
 var sum = 0;
-var panelBorder = 1;
+var panelBorder = 0;
 
 var inx = pv.Scale.linear(0, pv.max(nodes, function(n) { return n.indegree})).range(0, 2*column)
 var outx = pv.Scale.linear(0 , pv.max(nodes, function(n) { return n.outdegree})).range(0, 2*column)
@@ -215,7 +214,7 @@ var y = pv.Scale.linear(0, nodes.length).range(2*wordHeight, params.h)
 
 
 var vis = new pv.Panel()
-    .width(params.width)
+    .width(960)
     .height(sh)
     .top(0)
     .left(0);
@@ -267,8 +266,8 @@ var middle = vis.add(pv.Panel)
 leftmost.add(pv.Label)
 	.data(function() {return m.incoming})
 	.right(5)
-	.text(function(d) {return unstem(d.src)})
 	.top(function(d) {return (this.index)*wordHeight })
+	.text(function(d) {return unstem(d.src)})
 	.textBaseline("top")
 	.textAlign("right")
 	.font("1.4em Gill Sans, Helvetica, Arial, sans-serif")
@@ -425,18 +424,6 @@ sliders.add(pv.Area)
   .anchor("left").add(pv.Line)
     .lineWidth(1)
 	.strokeStyle(params.incolor[2])
-
-sliders.add(pv.Label)
-	.data(["#incoming degree"])
-	.left(2*column)
-	.textAlign("right")
-	.top(20);
-
-sliders.add(pv.Label)
-	.data(["#outgoing degree"])
-	.right(2*column)
-	.textAlign("left")
-    .top(20);
 
 sliders.add(pv.Area)
     .data(nodes)
