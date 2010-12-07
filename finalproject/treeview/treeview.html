@@ -12,26 +12,50 @@
     <style type="text/css">
 
 #fig {
-  width: 1024px;
-  height: 675px;
-  margin-left: auto;
-  margin-right: auto;
-  position: relative;
-  top: 0px;
-  left: 0px;
+	width: 1024px;
+	height: 675px;
+	margin-left: auto;
+	margin-right: auto;
+	position: relative;
+	top: 0px;
+	left: 0px;
 }
 
 #fulltext {
-	font: 1em Gill Sans, Helvetica, Arial, sans-serif;
 	position: absolute;
-	top: 300px;
+	top: 230px;
 	left: 512px;
-	width: 256px;
+	width: 270px;
 /*	height: 100px;
 	overflow: auto;*/
-	text-align: justify;
+	text-align: left;
 	margin: 0;
 	padding: 0;
+}
+
+#title {
+	font: 1em Gill Sans, Helvetica, Arial, sans-serif;
+	font-weight:bold;
+	font-variant:small-caps;
+	color:#525252;
+	padding-bottom: 15px;
+	}
+#iamlookingfor{
+	font: 1em Gill Sans, Helvetica, Arial, sans-serif;
+	font-variant:small-caps;
+	color:#525252;
+	padding-bottom: 15px;
+	}
+#iam {
+	font: 1em Gill Sans, Helvetica, Arial, sans-serif;
+	font-variant:small-caps;
+	color:#525252;
+	padding-bottom: 15px;
+	}
+#age_gender_location_orientation {
+	font: 0.85em Gill Sans;
+	font-style:italic;
+	color:#525252;
 }
 
 #searchbox {
@@ -71,7 +95,8 @@
         });
     });
 /*
- * TODO: 
+ * TODO:
+ * - add orientation 
  * - Tweak the alignment of the center word so the word is in the center of the cones
  * - Add "..." to show words that can't fit on the screen
  * - Remove "i" and "the"
@@ -85,6 +110,7 @@
  * - Tweak the alignment of the full text
  * - Tweak the side columns, start centered but don't grow beyond the top
  * - Animate the input bar if the search term does not exist
+ * - second has an error!
  */
 
 var params = {
@@ -443,19 +469,46 @@ sliders.events("all")
     .event("mousedown", pv.Behavior.point().collapse("x"))
 //    .event("mouseover", pv.Behavior.point().collapse("x"));
 
+function displayPerson(){
+	var personid = 481404130;
+	var age = people[personid].age;
+	var gender = people[personid].gender;
+	var description;
+	if (gender === 0) {
+		if (age === 0) {
+			description = "Female, " + people[personid].location ; 
+		}
+		else {
+			description = age + " year old female, " + people[personid].location;
+		}
+	}
+	else{
+		if (age === 0) {
+		description = "Male, " + people[personid].location ; 
+	}
+	else {
+		description = age + " year old male, " + people[personid].location;
+	}
+	}
+	$("#title").text(people[personid].title);
+	$("#iam").text(people[personid].iam);
+	$("#iamlookingfor").text(people[personid].looking);
+	$("#age_gender_location_orientation").text(description);	
 
+}
+
+$(function() {
+	displayPerson();
+});
 
 vis.render();
 
     </script>
   <div id="fulltext">
-	<h1>Person</h1>
-	<h2>I am</h2>
+	<div id="title"></div>
 	<div id="iam"></div>
-	<h2>I am looking for</h2>
 	<div id="iamlookingfor"></div>
-  </div>
-  
-  </div>
+	<div id="age_gender_location_orientation"></div>
   </div></body>
+  
 </html>
