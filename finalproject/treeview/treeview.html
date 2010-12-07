@@ -103,6 +103,8 @@ var m = {
 	outgoingRunSum: [],
 	outgoingSum: 0,
 	index: 0,
+	people: [],
+	person: 0,
 	
 	updateWord : function(word) {
 		var i = 0;
@@ -121,7 +123,16 @@ var m = {
 		this.incomingSum = this.incomingRunSum[this.incomingRunSum.length - 1];
 		this.outgoingRunSum = runsum(this.outgoing);
 		this.outgoingSum = this.outgoingRunSum[this.outgoingRunSum.length - 1];
+	},
+	
+	updatePeople : function(newPeople) {
+		this.people = newPeople;
+		if (this.people.length && this.people.length > 0) {
+			this.person = 0;
+		}
+		// TODO: Invoke displayPerson function
 	}
+	
 };
 
 filterNetwork(300);
@@ -248,6 +259,16 @@ leftmost.add(pv.Panel)
 	.lineWidth(3)
 	.antialias(false);
 
+// Panel for clicking the words
+leftmost.add(pv.Panel)
+	.data(function() {return m.incoming})
+	.right(0)
+	.top(function(d) {return this.index*wordHeight })
+	.height(wordHeight)
+	.width(column)
+	.events("all")
+    .event("mousedown", function(edge) { m.updatePeople(edge.people)})
+
 midleft.add(pv.Panel)
 	.data(function() { return m.incoming;})
   .add(pv.Line)
@@ -287,6 +308,14 @@ rightmost.add(pv.Panel)
 	.lineWidth(3)
 	.antialias(false);
 
+rightmost.add(pv.Panel)
+	.data(function() {return m.outgoing})
+	.left(0)
+	.top(function(d) {return this.index*wordHeight })
+	.height(wordHeight)
+	.width(column)
+	.events("all")
+    .event("mousedown", function(edge) { m.updatePeople(edge.people)})
 	
 midright.add(pv.Panel)
 	.data(function() { return m.outgoing })
@@ -305,6 +334,7 @@ midright.add(pv.Panel)
     .left(function(d) {return d.x})
     .top(function(d) {return d.y})
 
+// Right vertical bar
 middle.add(pv.Line)
 	.data(function() { return [
 			{x: 6*column, y: 80 },
@@ -313,8 +343,10 @@ middle.add(pv.Line)
     .top(function(d) {return d.y})
 	.strokeStyle(params.outcolor[2])
 	.lineWidth(3)
-	.antialias(false);
+	.antialias(false)
+	;
 
+// Left vertical bar
 middle.add(pv.Line)
 	.data(function() { return [
 			{x: 0*column, y: 80},
@@ -325,7 +357,7 @@ middle.add(pv.Line)
 	.lineWidth(3)
 	.antialias(false);
 
-// Add the words at the center, left and right
+// Main word
 middle.add(pv.Label)
 	.data(function () {return [m.word];})
 	.text(function(d) {return unstem(d)})
@@ -336,6 +368,7 @@ middle.add(pv.Label)
 	.textAlign("center")
 	.font("5em Gill Sans, Helvetica, Arial, sans-serif")
 
+// Looks for label on the left
 middle.add(pv.Label)
 	.data(function () {return ["looks for"];})
 	.left(1*column)
@@ -345,6 +378,7 @@ middle.add(pv.Label)
 	.textAlign("center")
 	.font("1.4em Gill Sans, Helvetica, Arial, sans-serif")
 
+// Looks for label on the right
 middle.add(pv.Label)
 	.data(function () {return ["looks for"];})
 	.right(1*column)
@@ -371,13 +405,9 @@ sliders.add(pv.Area)
     .top(function(d) {return y(this.index)})
     .width(function(d) {return outx(d.outdegree)})
     .fillStyle(params.outcolor[0])
-//	.events("all")
-//    .event("mousedown", pv.Behavior.point().collapse("x"))
     .event("point", function() { 
 		m.updateWord(nodes[this.index].node);
 		vis.render();
-	})
-    .event("unpoint", function() { 
 	})
   .anchor("right").add(pv.Line)
     .lineWidth(1)

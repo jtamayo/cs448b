@@ -179,6 +179,7 @@ public class Main {
         sb.append("{");
         sb.append("age: " + p.age + ", ");
         sb.append("gender: " + p.gender + ", ");
+        sb.append("lookingGender: \"" + p.lookingGender + "\", ");
         sb.append("location: \"" + escape(p.location) + "\", ");
         sb.append("iam: \"" + escape(p.iam) + "\", ");
         sb.append("looking: \"" + escape(p.looking) + "\", ");
@@ -240,7 +241,7 @@ public class Main {
             Node root = childNodes.item(i);
             NodeList entries = root.getChildNodes();
             for (int j = 0; j < entries.getLength(); j++) {
-//                if (j > 200) break;
+                if (j > 200) break;
                 Node item = entries.item(j);
                 if (item.getNodeName().equals("RawData")) {
                     System.err.println("persons= " + j);

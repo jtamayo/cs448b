@@ -1,9 +1,7 @@
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import edu.stanford.nlp.ling.HasWord;
 import edu.stanford.nlp.ling.Sentence;
@@ -40,7 +38,7 @@ public class Adjectivizer {
 
             for (TaggedWord taggedWord : sent) {
                 final String tag = taggedWord.tag();
-                if ("JJ".equals(tag) || "JJR".equals(tag) || "JJS".equals(tag)) {
+                if ("JJ".equals(tag) || "JJR".equals(tag) || "JJS".equals(tag) || "NN".equals(tag) || "NNS".equals(tag)) {
                     final String stem = stemmer.stem(taggedWord.value());
 //                    remember(stem, sentence);
                     adjectives.add(stem);
