@@ -26,9 +26,8 @@
 	top: 230px;
 	left: 512px;
 	width: 270px;
-/*	height: 100px;
-	overflow: auto;*/
 	text-align: left;
+	overflow: auto;
 	margin: 0;
 	padding: 0;
 }
@@ -156,7 +155,7 @@ var m = {
 		if (this.people.length && this.people.length > 0) {
 			this.person = 0;
 		}
-		// TODO: Invoke displayPerson function
+		displayPerson(this.people[this.person]);
 	}
 	
 };
@@ -469,8 +468,7 @@ sliders.events("all")
     .event("mousedown", pv.Behavior.point().collapse("x"))
 //    .event("mouseover", pv.Behavior.point().collapse("x"));
 
-function displayPerson(){
-	var personid = 481404130;
+function displayPerson(personid){
 	var age = people[personid].age;
 	var gender = people[personid].gender;
 	var description;
@@ -496,10 +494,6 @@ function displayPerson(){
 	$("#age_gender_location_orientation").text(description);	
 
 }
-
-$(function() {
-	displayPerson();
-});
 
 vis.render();
 
