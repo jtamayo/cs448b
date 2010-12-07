@@ -152,7 +152,7 @@ var sorters = {
 	}
 }
 
-nodes.sort(sorters.byoutdegree);
+nodes.sort(sorters.byassymetry);
 
 /*
  * What's the basic state of the visualization?
@@ -173,7 +173,7 @@ var panelBorder = 0;
 
 var inx = pv.Scale.linear(0, pv.max(nodes, function(n) { return n.indegree})).range(0, 2*column)
 var outx = pv.Scale.linear(0 , pv.max(nodes, function(n) { return n.outdegree})).range(0, 2*column)
-var y = pv.Scale.linear(0, nodes.length).range(10, 640) 
+var y = pv.Scale.linear(0, nodes.length).range(2*wordHeight, params.h) 
 
 
 var vis = new pv.Panel()
@@ -255,11 +255,10 @@ midleft.add(pv.Panel)
 			var ret = [
 			{x: 0*column, y: (this.parent.index + 1)*wordHeight - d.count/2},
 			{x: 0.5*column, y: (this.parent.index + 1)*wordHeight - d.count/2},
-			{x: 0.5*column, y: sh/2 - 200 + (-m.incomingSum/2 + m.incomingRunSum[this.parent.index]) - d.count/2},
-			{x: 1*column, y: sh/2 - 200+ (-m.incomingSum/2 + m.incomingRunSum[this.parent.index]) - d.count/2},
+			{x: 0.5*column, y: 80 + ( m.incomingRunSum[this.parent.index]) - d.count/2},
+			{x: 1*column, y: 80 + ( m.incomingRunSum[this.parent.index]) - d.count/2},
 		]
 		return ret})
-	.strokeStyle("#DDD")
 	.strokeStyle(params.incolor[0])
 	.lineWidth(function(_, d) {return d.count})
 	.interpolate("basis")
@@ -294,8 +293,8 @@ midright.add(pv.Panel)
   .add(pv.Line)
   	.data(function(d) { 
 		var ret = [
-			{x: 0*column, y: sh/2 - 200 + (-m.outgoingSum/2 + m.outgoingRunSum[this.parent.index]) - d.count/2},
-			{x: 0.5*column, y: sh/2 - 200 + (-m.outgoingSum/2 + m.outgoingRunSum[this.parent.index]) - d.count/2},
+			{x: 0*column, y: 80 + ( m.outgoingRunSum[this.parent.index]) - d.count/2},
+			{x: 0.5*column, y: 80 + ( m.outgoingRunSum[this.parent.index]) - d.count/2},
 			{x: 0.5*column, y: (this.parent.index + 1)*wordHeight - d.count/2},
 			{x: 1*column, y: (this.parent.index + 1)*wordHeight - d.count/2},
 		]
@@ -306,11 +305,10 @@ midright.add(pv.Panel)
     .left(function(d) {return d.x})
     .top(function(d) {return d.y})
 
-// Add marks for the width of the cones
 middle.add(pv.Line)
 	.data(function() { return [
-			{x: 6*column, y: sh/2 - 200 - m.outgoingSum/2},
-			{x: 6*column, y: sh/2 - 200 + m.outgoingSum/2},]})
+			{x: 6*column, y: 80 },
+			{x: 6*column, y: 80 + m.outgoingSum},]})
 	.left(function(d) {return d.x})
     .top(function(d) {return d.y})
 	.strokeStyle(params.outcolor[2])
@@ -319,8 +317,8 @@ middle.add(pv.Line)
 
 middle.add(pv.Line)
 	.data(function() { return [
-			{x: 0*column, y: sh/2 - 200 - m.incomingSum/2},
-			{x: 0*column, y: sh/2 - 200 + m.incomingSum/2},]})
+			{x: 0*column, y: 80},
+			{x: 0*column, y: 80 + m.incomingSum},]})
 	.left(function(d) {return d.x})
     .top(function(d) {return d.y})
 	.strokeStyle(params.incolor[2])
@@ -334,9 +332,27 @@ middle.add(pv.Label)
 	.left(3*column)
 	.top(sh/2 - 200)
 	.width(4*column)
-	.textBaseline("middle")
+	.textBaseline("bottom")
 	.textAlign("center")
 	.font("5em Gill Sans, Helvetica, Arial, sans-serif")
+
+middle.add(pv.Label)
+	.data(function () {return ["looks for"];})
+	.left(1*column)
+	.top(sh/2 - 200)
+	.width(4*column)
+	.textBaseline("bottom")
+	.textAlign("center")
+	.font("1.4em Gill Sans, Helvetica, Arial, sans-serif")
+
+middle.add(pv.Label)
+	.data(function () {return ["looks for"];})
+	.right(1*column)
+	.top(sh/2 - 200)
+	.width(4*column)
+	.textBaseline("bottom")
+	.textAlign("center")
+	.font("1.4em Gill Sans, Helvetica, Arial, sans-serif")
 
 /* The area with top line. */
 sliders.add(pv.Area)
@@ -345,8 +361,6 @@ sliders.add(pv.Area)
     .top(function(d) {return y(this.index)})
     .width(function(d) {return inx(d.indegree)})
     .fillStyle(params.incolor[0])
-//	.segmented(true)
-//	.fillStyle(function(d) {return this.index === m.index ? params.incolor[2] : params.incolor[0]})
   .anchor("left").add(pv.Line)
     .lineWidth(1)
 	.strokeStyle(params.incolor[2])
@@ -356,8 +370,6 @@ sliders.add(pv.Area)
 	.left(2*column)
     .top(function(d) {return y(this.index)})
     .width(function(d) {return outx(d.outdegree)})
-//	.segmented(true)
-//    .fillStyle(function(d) {return this.index === m.index ? params.outcolor[2] : params.outcolor[0]})
     .fillStyle(params.outcolor[0])
 //	.events("all")
 //    .event("mousedown", pv.Behavior.point().collapse("x"))
@@ -370,6 +382,15 @@ sliders.add(pv.Area)
   .anchor("right").add(pv.Line)
     .lineWidth(1)
 	.strokeStyle(params.outcolor[2])
+	
+//vis.add(pv.Rule)
+//    .data(outx.ticks(5))
+//    .visible(function(d) {return d})
+//    .left(function(d) {return 2*column + outx(d)})
+//    .bottom(0)
+//    .strokeStyle(function(d) {return d ? "#eee" : "#000"})
+//  .anchor("top").add(pv.Label)
+//    .text(y.tickFormat);
 
 sliders.add(pv.Line)
 	.data(function() {return [0, nodes[m.index].indegree]})
@@ -386,6 +407,7 @@ sliders.add(pv.Line)
 	.strokeStyle(params.outcolor[2])
 	.lineWidth(2)
 	.antialias(false)
+	
 
 sliders.events("all")
     .event("mousedown", pv.Behavior.point().collapse("x"))
