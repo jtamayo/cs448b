@@ -425,6 +425,18 @@ sliders.add(pv.Area)
     .lineWidth(1)
 	.strokeStyle(params.incolor[2])
 
+sliders.add(pv.Label)
+	.data(["#incoming degree"])
+	.left(2*column)
+	.textAlign("right")
+	.top(20);
+
+sliders.add(pv.Label)
+	.data(["#outgoing degree"])
+	.right(2*column)
+	.textAlign("left")
+    .top(20);
+
 sliders.add(pv.Area)
     .data(nodes)
 	.left(2*column)
